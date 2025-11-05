@@ -1,14 +1,7 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".",
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/about",
-      "destination": "/index.html"
-    }
+  "routes": [
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/about", "dest": "/index.html" },
+    { "src": "/work", "dest": "/work.html" }
   ]
 }
