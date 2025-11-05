@@ -44,16 +44,17 @@
     }
     
     .profile {
-      width: 64px;
-      height: 64px;
-      background: black;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 24px;
       margin-bottom: 2.5rem;
+      overflow: hidden;
+    }
+    
+    .profile img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     
     .bio {
@@ -80,6 +81,40 @@
       color: black;
     }
     
+    .projects {
+      margin-top: 4rem;
+      padding-top: 3rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .projects h2 {
+      font-weight: 400;
+      font-size: 16px;
+      margin-bottom: 2rem;
+    }
+    
+    .project {
+      margin-bottom: 2.5rem;
+    }
+    
+    .project a {
+      color: black;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    
+    .project a:hover {
+      text-decoration: underline;
+    }
+    
+    .project p {
+      margin-top: 0.5rem;
+      font-size: 13px;
+      font-weight: 300;
+      color: rgba(0, 0, 0, 0.7);
+      line-height: 1.5;
+    }
+    
     @media (max-width: 640px) {
       body {
         padding: 2rem 1rem;
@@ -95,23 +130,48 @@
   <div class="container">
     <nav>
       <a href="index.html" class="active">about</a>
-      <a href="work.html">work</a>
     </nav>
     
-    <div class="profile">V</div>
+    <div class="profile">
+      <img src="/assets/personal-website-pic.jpeg" alt="Viraat">
+    </div>
     
     <div class="bio">
       <p>Hi! My name is Viraat. A little about me. I like to build things. Most of my time nowadays is spent building Exla.</p>
       
-      <p>I was an ex-MLE at Amazon. I learned a lot about big tech.</p>
+      <p>I was an ex-MLE at a big tech company at one point in time.</p>
       
-      <p>When I'm not busy with Exla, I like to</p>
+      <p>When I'm not busy with Exla, I like to work on some things. Here is a random collection of projects and stuff.</p>
     </div>
     
     <div class="links">
-      <a href="https://github.com/yourusername" target="_blank">github</a>
-      <a href="https://twitter.com/yourusername" target="_blank">twitter</a>
-      <a href="mailto:your@email.com">email</a>
+      <a href="https://github.com/viraatdas" target="_blank">github</a>
+      <a href="https://twitter.com/therealviraat" target="_blank">twitter</a>
+      <a href="mailto:viraat@exla.ai">email</a>
+    </div>
+    
+    <div class="projects">
+      <h2>Projects</h2>
+      
+      <div class="project">
+        <a href="https://example.com/project1" target="_blank">Project Alpha</a>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+      </div>
+      
+      <div class="project">
+        <a href="https://example.com/project2" target="_blank">Project Beta</a>
+        <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      </div>
+      
+      <div class="project">
+        <a href="https://example.com/project3" target="_blank">Project Gamma</a>
+        <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+      </div>
+      
+      <div class="project">
+        <a href="https://example.com/project4" target="_blank">Project Delta</a>
+        <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      </div>
     </div>
   </div>
 </body>
