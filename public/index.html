@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Viraat</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Courier New', monospace;
+      background: white;
+      color: black;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 3rem 1.5rem;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    nav {
+      margin-bottom: 4rem;
+    }
+    
+    nav a {
+      color: black;
+      text-decoration: none;
+      margin-right: 1rem;
+    }
+    
+    nav a:hover {
+      text-decoration: underline;
+    }
+    
+    nav a.active {
+      text-decoration: underline;
+    }
+    
+    .profile {
+      width: 64px;
+      height: 64px;
+      background: black;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      margin-bottom: 2.5rem;
+    }
+    
+    .bio {
+      font-weight: 300;
+      max-width: 500px;
+    }
+    
+    .bio p {
+      margin-bottom: 1rem;
+    }
+    
+    .links {
+      margin-top: 2rem;
+      font-size: 12px;
+    }
+    
+    .links a {
+      color: rgba(0, 0, 0, 0.5);
+      text-decoration: none;
+      margin-right: 1rem;
+    }
+    
+    .links a:hover {
+      color: black;
+    }
+    
+    @media (max-width: 640px) {
+      body {
+        padding: 2rem 1rem;
+      }
+      
+      nav {
+        margin-bottom: 3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html" class="active">about</a>
+      <a href="work.html">work</a>
+    </nav>
+    
+    <div class="profile">V</div>
+    
+    <div class="bio">
+      <p>Hi! My name is Viraat. A little about me. I like to build things. Most of my time nowadays is spent building Exla.</p>
+      
+      <p>I was an ex-MLE at Amazon. I learned a lot about big tech.</p>
+      
+      <p>When I'm not busy with Exla, I like to</p>
+    </div>
+    
+    <div class="links">
+      <a href="https://github.com/yourusername" target="_blank">github</a>
+      <a href="https://twitter.com/yourusername" target="_blank">twitter</a>
+      <a href="mailto:your@email.com">email</a>
+    </div>
+  </div>
+</body>
+</html>
+

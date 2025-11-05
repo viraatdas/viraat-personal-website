@@ -1,7 +1,3 @@
 {
-  "routes": [
-    { "src": "/", "dest": "/index.html" },
-    { "src": "/about", "dest": "/index.html" },
-    { "src": "/work", "dest": "/work.html" }
-  ]
+  "public": true
 }
