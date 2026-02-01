@@ -1,21 +1,14 @@
 {
-  "redirects": [
-    {
-      "source": "/big-thots",
-      "destination": "https://viraatlol.notion.site/Big-Thots-2fa53423f1cf80828a4dd1dbc6d72c9d",
-      "permanent": false
-    },
+  "rewrites": [
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "bigthots.viraat.dev" }],
-      "destination": "https://viraatlol.notion.site/Big-Thots-2fa53423f1cf80828a4dd1dbc6d72c9d",
-      "permanent": false
-    }
-  ],
-  "rewrites": [
+      "destination": "/big-thots.html"
+    },
     { "source": "/", "destination": "/index.html" },
     { "source": "/about", "destination": "/index.html" },
-    { "source": "/work", "destination": "/work.html" }
+    { "source": "/work", "destination": "/work.html" },
+    { "source": "/big-thots", "destination": "/big-thots.html" }
   ]
 }
 
