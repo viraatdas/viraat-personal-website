@@ -1,4 +1,11 @@
 {
+  "redirects": [
+    {
+      "source": "/big-thots",
+      "destination": "https://viraatlol.notion.site/Big-Thots-2fa53423f1cf80828a4dd1dbc6d72c9d",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
     { "source": "/about", "destination": "/index.html" },
