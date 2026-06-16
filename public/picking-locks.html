@@ -4,193 +4,73 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Picking Locks</title>
-<meta name="description" content="An interactive, visual explanation of how pin tumbler locks work, and how they're picked.">
+<meta name="description" content="An interactive, 3D explanation of how pin tumbler locks work, and how they're picked.">
 
 <link rel="icon" type="image/jpeg" href="/assets/personal-website-pic.jpeg">
-
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://viraat.dev/picking-locks">
+<meta property="og:url" content="https://interactive-blogs.viraat.dev/picking-locks">
 <meta property="og:title" content="Picking Locks">
-<meta property="og:description" content="An interactive, visual explanation of how pin tumbler locks work, and how they're picked.">
+<meta property="og:description" content="An interactive, 3D explanation of how pin tumbler locks work, and how they're picked.">
 <meta property="og:image" content="https://viraat.dev/assets/personal-website-pic.jpeg">
 <meta property="twitter:card" content="summary_large_image">
 <meta property="twitter:title" content="Picking Locks">
-<meta property="twitter:description" content="An interactive, visual explanation of how pin tumbler locks work, and how they're picked.">
+<meta property="twitter:description" content="An interactive, 3D explanation of how pin tumbler locks work, and how they're picked.">
 <meta property="twitter:image" content="https://viraat.dev/assets/personal-website-pic.jpeg">
 
 <style>
   :root {
-    --ink: #161719;
-    --ink-strong: #050608;
-    --muted: #565d64;
-    --link: #2a6fb5;
-    --rule: #e6e8eb;
-    --fig-bg: #fbfcfd;
-    --fig-border: #e7eaee;
+    --ink: #161719; --ink-strong: #050608; --muted: #565d64;
+    --link: #2a6fb5; --rule: #e6e8eb; --fig-bg: #eef1f5; --fig-border: #e2e6ea;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   html { -webkit-text-size-adjust: 100%; }
-
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--ink);
-    background: #fff;
-    font-size: 18px;
-    line-height: 1.7;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+    color: var(--ink); background: #fff; font-size: 18px; line-height: 1.7;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
   }
-
-  .wrap {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 0 22px 8rem;
-  }
-
-  .topnav {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 1.6rem 22px 0;
-    font-size: 14px;
-  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 22px 8rem; }
+  .topnav { max-width: 680px; margin: 0 auto; padding: 1.6rem 22px 0; font-size: 14px; }
   .topnav a { color: var(--muted); text-decoration: none; }
   .topnav a:hover { color: var(--ink); }
-
-  header.post {
-    padding: 3.2rem 0 1.2rem;
-  }
-  header.post h1 {
-    font-size: 40px;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: var(--ink-strong);
-    font-weight: 700;
-  }
-  header.post .meta {
-    margin-top: 0.9rem;
-    color: var(--muted);
-    font-size: 15px;
-  }
-
+  header.post { padding: 3.2rem 0 1.2rem; }
+  header.post h1 { font-size: 40px; line-height: 1.15; letter-spacing: -0.02em; color: var(--ink-strong); font-weight: 700; }
+  header.post .meta { margin-top: 0.9rem; color: var(--muted); font-size: 15px; }
   p { margin: 1.25rem 0; }
-
-  h2 {
-    margin: 3.2rem 0 0.4rem;
-    font-size: 26px;
-    line-height: 1.25;
-    letter-spacing: -0.01em;
-    color: var(--ink-strong);
-    font-weight: 700;
-  }
-
+  h2 { margin: 3.2rem 0 0.4rem; font-size: 26px; line-height: 1.25; letter-spacing: -0.01em; color: var(--ink-strong); font-weight: 700; }
   a { color: var(--link); text-decoration: none; }
   a:hover { text-decoration: underline; }
-
-  em { font-style: italic; }
-  strong { font-weight: 650; }
-
+  em { font-style: italic; } strong { font-weight: 650; }
   .lead { font-size: 19px; }
-
-  .note {
-    font-size: 15px;
-    color: var(--muted);
-    border-left: 2px solid var(--rule);
-    padding-left: 1rem;
-    margin: 1.6rem 0;
-  }
-
-  /* ---- figures ---- */
-  figure {
-    margin: 2.4rem 0;
-  }
+  .note { font-size: 15px; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 1rem; margin: 1.6rem 0; }
+  figure { margin: 2.4rem 0; }
   .fig-canvas-wrap {
-    background: var(--fig-bg);
-    border: 1px solid var(--fig-border);
-    border-radius: 10px;
-    overflow: hidden;
+    background: linear-gradient(180deg, #f4f6f9 0%, #e7ebf0 100%);
+    border: 1px solid var(--fig-border); border-radius: 12px; overflow: hidden; position: relative;
   }
-  canvas { display: block; width: 100%; touch-action: none; }
-
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.7rem 1.4rem;
-    padding: 0.95rem 1.05rem;
-    border-top: 1px solid var(--fig-border);
-    font-size: 14px;
-    color: var(--ink);
-  }
-  .ctrl {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    white-space: nowrap;
-  }
+  canvas { display: block; width: 100%; touch-action: none; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  .hint { position: absolute; top: 10px; right: 12px; font-size: 11.5px; color: #9aa3ad; pointer-events: none; letter-spacing: 0.02em; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1.4rem; padding: 0.95rem 1.05rem; border-top: 1px solid var(--fig-border); font-size: 14px; color: var(--ink); background: #fbfcfd; border-radius: 0 0 12px 12px; }
+  .ctrl { display: flex; align-items: center; gap: 0.55rem; white-space: nowrap; }
   .ctrl label { color: var(--muted); }
-
-  input[type="range"] {
-    -webkit-appearance: none; appearance: none;
-    height: 4px; width: 150px;
-    background: #d7dbe0; border-radius: 999px; outline: none;
-    cursor: pointer;
-  }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none;
-    width: 17px; height: 17px; border-radius: 50%;
-    background: #fff; border: 1px solid #b7bdc4;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.18);
-    cursor: pointer;
-  }
-  input[type="range"]::-moz-range-thumb {
-    width: 17px; height: 17px; border-radius: 50%;
-    background: #fff; border: 1px solid #b7bdc4;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.18); cursor: pointer;
-  }
-
-  .btn {
-    font: inherit; font-size: 13.5px;
-    padding: 0.34rem 0.8rem;
-    border: 1px solid #ccd1d6; border-radius: 7px;
-    background: #fff; color: var(--ink);
-    cursor: pointer;
-  }
+  input[type="range"] { -webkit-appearance: none; appearance: none; height: 4px; width: 150px; background: #d7dbe0; border-radius: 999px; outline: none; cursor: pointer; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 17px; height: 17px; border-radius: 50%; background: #fff; border: 1px solid #b7bdc4; box-shadow: 0 1px 2px rgba(0,0,0,0.18); cursor: pointer; }
+  input[type="range"]::-moz-range-thumb { width: 17px; height: 17px; border-radius: 50%; background: #fff; border: 1px solid #b7bdc4; box-shadow: 0 1px 2px rgba(0,0,0,0.18); cursor: pointer; }
+  .btn { font: inherit; font-size: 13.5px; padding: 0.34rem 0.8rem; border: 1px solid #ccd1d6; border-radius: 7px; background: #fff; color: var(--ink); cursor: pointer; }
   .btn:hover { background: #f1f3f5; }
-  .btn:active { background: #e7eaee; }
-  .btn.primary { border-color: #b9d0ea; background: #eef5fc; color: #1d588f; }
-  .btn.primary:hover { background: #e2eefa; }
-
+  .btn.primary { border-color: #b9d0ea; background: #eef5fc; color: #1d588f; font-weight: 600; }
   .switch { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; user-select: none; }
   .switch input { accent-color: var(--link); width: 15px; height: 15px; }
-
-  .status {
-    font-size: 13.5px; color: var(--muted);
-    min-width: 12ch;
-  }
-  .status.good { color: #1f7a4d; }
-  .status.bind { color: #b4561c; }
-  .status.open { color: #1f7a4d; font-weight: 650; }
-
-  figcaption {
-    font-size: 14.5px; color: var(--muted);
-    margin-top: 0.85rem; line-height: 1.6;
-  }
-
-  hr.end {
-    border: none; border-top: 1px solid var(--rule);
-    margin: 3.5rem 0 1.6rem;
-  }
+  .status { font-size: 13.5px; color: var(--muted); min-width: 10ch; }
+  .status.good { color: #1f7a4d; } .status.bind { color: #b4561c; } .status.open { color: #1f7a4d; font-weight: 650; }
+  figcaption { font-size: 14.5px; color: var(--muted); margin-top: 0.85rem; line-height: 1.6; }
+  hr.end { border: none; border-top: 1px solid var(--rule); margin: 3.5rem 0 1.6rem; }
   footer.post { color: var(--muted); font-size: 14.5px; }
   footer.post a { color: var(--link); }
-
   @media (max-width: 560px) {
-    body { font-size: 17px; }
-    header.post h1 { font-size: 32px; }
-    h2 { font-size: 23px; }
-    input[type="range"] { width: 120px; }
-    .controls { gap: 0.6rem 1rem; }
+    body { font-size: 17px; } header.post h1 { font-size: 32px; } h2 { font-size: 23px; }
+    input[type="range"] { width: 120px; } .controls { gap: 0.6rem 1rem; }
   }
 </style>
 </head>
@@ -200,26 +80,26 @@
   <div class="wrap">
     <header class="post">
       <h1>Picking Locks</h1>
-      <div class="meta">An interactive explainer · drag the figures, move the sliders</div>
+      <div class="meta">An interactive explainer · the figures are real 3D, drag to spin them</div>
     </header>
 
     <p class="lead">A lock is a tiny machine with exactly one job: stay shut until the right key shows up. It feels solid and secret. But the thing inside the most common lock in the world, the <strong>pin tumbler</strong>, is simple enough to understand in an afternoon. And with a little patience, simple enough to open without its key.</p>
 
-    <p>Everything below is interactive. None of it is a video. Each figure is a live model you can grab and poke at. Let's start by cutting one open.</p>
+    <p>Every figure below is a live 3D model. Drag to rotate it, use the controls, and look at it from any angle. Let's start by cutting one open.</p>
 
     <h2>What's inside a lock</h2>
 
     <p>Cut a padlock or a door cylinder in half and you'll find a brass cylinder, the <strong>plug</strong>, sitting inside a fixed housing. The plug is the part that turns to throw the bolt. Drilled across both of them is a row of little vertical shafts called <strong>chambers</strong>. Each chamber is packed with two stacked pins and a spring.</p>
 
-    <p>The lower pins, the <strong>key pins</strong>, come in different lengths and rest on the key. The upper pins, the <strong>driver pins</strong>, get shoved down by the springs. Slide the key in and out below and watch the stacks rise and fall.</p>
+    <p>The lower pins, the <strong>key pins</strong>, come in different lengths and rest on the key. The upper pins, the <strong>driver pins</strong>, get shoved down by the springs. Slide the key in and out below, and spin the whole thing around to see how the stacks rise and fall.</p>
 
     <figure>
-      <div class="fig-canvas-wrap"><canvas id="cv-anatomy"></canvas></div>
+      <div class="fig-canvas-wrap"><canvas id="cv-anatomy"></canvas><div class="hint">drag to rotate</div></div>
       <div class="controls">
-        <div class="ctrl"><label for="sl-insert">Key</label><input type="range" id="sl-insert" min="0" max="1" step="0.001" value="0"><span class="status" id="st-insert">removed</span></div>
-        <label class="switch"><input type="checkbox" id="ck-labels" checked> labels</label>
+        <div class="ctrl"><label for="sl-insert">key</label><input type="range" id="sl-insert" min="0" max="1" step="0.001" value="0"><span class="status" id="st-insert">removed</span></div>
+        <label class="switch"><input type="checkbox" id="ck-cut" checked> cutaway</label>
       </div>
-      <figcaption>The key's jagged edge is called its <em>bitting</em>. Each tooth is ground to lift its key pin by exactly the right amount.</figcaption>
+      <figcaption>The key's jagged edge is its <em>bitting</em>. Each tooth is ground to lift its key pin by exactly the right amount, so every gap lands on one line.</figcaption>
     </figure>
 
     <h2>The shear line</h2>
@@ -228,13 +108,13 @@
 
     <p>At rest, every driver pin straddles the shear line. Its body sits partly in the plug and partly in the housing, pinning the two together like a dowel. The plug can't rotate. Put the correct key in and every stack lifts so that the <em>gap</em> between the key pin and the driver pin lands exactly on the shear line. Now nothing crosses the boundary, and the plug spins freely.</p>
 
-    <p>Try it. With no key, turning the plug jams almost immediately. Pop the correct key in and it sweeps open.</p>
+    <p>Try it. With no key, turning the plug jams almost immediately and you can see the driver pins biting across the gap. Pop the correct key in and it sweeps open.</p>
 
     <figure>
-      <div class="fig-canvas-wrap"><canvas id="cv-shear"></canvas></div>
+      <div class="fig-canvas-wrap"><canvas id="cv-shear"></canvas><div class="hint">drag to rotate</div></div>
       <div class="controls">
-        <label class="switch"><input type="checkbox" id="ck-key2"> correct key inserted</label>
-        <div class="ctrl"><label for="sl-turn">Turn</label><input type="range" id="sl-turn" min="0" max="1" step="0.001" value="0"></div>
+        <label class="switch"><input type="checkbox" id="ck-key2"> correct key in</label>
+        <div class="ctrl"><label for="sl-turn">turn</label><input type="range" id="sl-turn" min="0" max="1" step="0.001" value="0"></div>
         <span class="status" id="st-shear">locked</span>
       </div>
       <figcaption>Without the key, the driver pins bridge the shear line and stop the plug after a few degrees. The right key clears every chamber at once.</figcaption>
@@ -244,19 +124,7 @@
 
     <p>If a lock were machined perfectly, picking would be almost impossible. You'd have to lift all five stacks to the exact shear line at the same time, with no key to hold them there. Good luck. The reason picking works at all is that <strong>no lock is perfect</strong>.</p>
 
-    <p>The chambers in the plug and the chambers in the housing are never drilled in a perfectly straight line. They're off by thousandths of an inch. So when you apply a gentle turning pressure to the plug (this is called <strong>tension</strong>), the plug rotates by a hair until it catches on whichever pin happens to be furthest out of line. That one pin now carries all the load. We say it's <strong>binding</strong>.</p>
-
-    <p>Crank up the tension below and watch the plug rock over by a tiny, very exaggerated amount. One pin catches first. The others are still loose.</p>
-
-    <figure>
-      <div class="fig-canvas-wrap"><canvas id="cv-bind"></canvas></div>
-      <div class="controls">
-        <div class="ctrl"><label for="sl-tension">Tension</label><input type="range" id="sl-tension" min="0" max="1" step="0.001" value="0"></div>
-        <span class="status" id="st-bind">no tension</span>
-        <button class="btn" id="bt-bind-reshuffle">new lock</button>
-      </div>
-      <figcaption>Real tolerances are measured in thousandths of an inch. Here the misalignment is wildly exaggerated so you can actually see which pin binds first.</figcaption>
-    </figure>
+    <p>The chambers in the plug and the chambers in the housing are never drilled in a perfectly straight line. They're off by thousandths of an inch. So when you apply a gentle turning pressure to the plug (this is called <strong>tension</strong>), the plug rotates by a hair until it catches on whichever pin happens to be furthest out of line. That one pin now carries all the load. We say it's <strong>binding</strong>, and it is the pin you can feel and work on.</p>
 
     <h2>Single pin picking</h2>
 
@@ -266,33 +134,24 @@
 
     <p>With the first pin set, the plug has turned a hair more, which makes the <em>next</em> least-aligned pin bind. You find it, set it, the plug creeps further. Set all five and the whole thing swings open.</p>
 
-    <p class="note">Try it below. Turn on tension, then drag straight up on the <strong>highlighted</strong> pin to push it to the shear line. Setting the wrong pin does nothing, so feel for the binding one. Push too far and you'll <em>overset</em> it, so ease off and try again. Turn your sound on and listen for the click.</p>
+    <p class="note">Turn on tension, then click the <strong>glowing</strong> binding pin to push it to the shear line. Pick the wrong one and nothing happens, so feel for the binding pin. Spin the lock while you work, and turn your sound on to hear each pin click home.</p>
 
     <figure>
-      <div class="fig-canvas-wrap"><canvas id="cv-spp"></canvas></div>
+      <div class="fig-canvas-wrap"><canvas id="cv-spp"></canvas><div class="hint">drag to rotate · click pins</div></div>
       <div class="controls">
         <label class="switch"><input type="checkbox" id="ck-tension"> apply tension</label>
         <span class="status" id="st-spp">turn on tension to begin</span>
         <button class="btn" id="bt-spp-reset">reset lock</button>
         <label class="switch"><input type="checkbox" id="ck-sound" checked> sound</label>
       </div>
-      <figcaption>Drag vertically on a pin to lift it. The binding pin glows, and sets click into place on the ledge. This is the exact sequence a picker feels in the dark, by touch alone.</figcaption>
+      <figcaption>The binding pin glows. Click it to set it on the ledge, and watch the plug creep around with every pin you set. This is exactly the sequence a picker feels in the dark, by touch alone.</figcaption>
     </figure>
 
     <h2>Raking, the lazy way</h2>
 
     <p>Single pin picking is precise but slow. The lazy opposite is <strong>raking</strong>: you hold tension and scrub a serrated tool back and forth across all the pins at once, bouncing them like crazy. Pins fly up chaotically, and every so often one is sitting at the shear line right as the plug nudges over, so it sets by pure luck. Keep scrubbing and the lucky sets pile up until the lock pops.</p>
 
-    <p>It's fast, and it works embarrassingly often on cheap locks. It's also unreliable, and a good lock will laugh at it. Drag the rake back and forth and let chance do the work.</p>
-
-    <figure>
-      <div class="fig-canvas-wrap"><canvas id="cv-rake"></canvas></div>
-      <div class="controls">
-        <span class="status" id="st-rake">drag the rake left and right</span>
-        <button class="btn" id="bt-rake-reset">reset lock</button>
-      </div>
-      <figcaption>Raking trades precision for speed. Security pins, with spools and serrations that fake out the ledge, exist specifically to make this (and picking) much harder.</figcaption>
-    </figure>
+    <p>It's fast, and it works embarrassingly often on cheap locks. It's also unreliable, and a good lock will laugh at it. Security pins, with mushroom and spool shapes that catch the ledge with a convincing fake click, exist specifically to punish both raking and careless single pin picking.</p>
 
     <h2>Why this is worth knowing</h2>
 
@@ -302,892 +161,451 @@
 
     <hr class="end">
     <footer class="post">
-      <p>Written by <a href="/">Viraat Das</a>. Built in the spirit of <a href="https://ciechanow.ski/" target="_blank" rel="noopener">Bartosz Ciechanowski</a>'s wonderful interactive essays. First of a few more of these to come.</p>
+      <p>Written by <a href="/">Viraat Das</a>. The locks are real-time 3D, rendered in your browser. Built in the spirit of <a href="https://ciechanow.ski/" target="_blank" rel="noopener">Bartosz Ciechanowski</a>'s interactive essays, alongside <a href="/noise-canceling">Noise Canceling</a> and <a href="/black-hole">Into a Black Hole</a>.</p>
     </footer>
   </div>
 
-<script>
-"use strict";
-(function () {
-  // ---------- shared helpers ----------
-  const PAL = {
-    housing: "#dfe3e8", housingEdge: "#c4cad1",
-    plug: "#eef1f4", plugEdge: "#cdd3da",
-    keyPin: "#aeb6c0", keyPinEdge: "#828b96",
-    driver: "#caa53f", driverEdge: "#9c7d20",
-    spring: "#9aa1aa",
-    key: "#c9ccd1", keyEdge: "#9aa0a8",
-    shear: "#3a86c8",
-    bindGlow: "#e07b34",
-    setGlow: "#2f9e63",
-    text: "#5a626b",
-    ledge: "#d9b94a"
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+// ---------------- tactile audio ----------------
+const Sound = (function () {
+  let ctx = null, noise = null; const api = { enabled: true };
+  function ensure() {
+    if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; try { ctx = new AC(); } catch (e) { return null; } }
+    if (ctx.state === "suspended") ctx.resume(); return ctx;
+  }
+  api.ensure = ensure;
+  function nbuf(c) { if (noise) return noise; const n = Math.floor(c.sampleRate * 0.05); noise = c.createBuffer(1, n, c.sampleRate); const d = noise.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; return noise; }
+  api.click = function (v) {
+    if (!api.enabled) return; const c = ensure(); if (!c) return; const t = c.currentTime; v = v == null ? 1 : v;
+    const s = c.createBufferSource(); s.buffer = nbuf(c);
+    const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2700; bp.Q.value = 1.1;
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16 * v, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+    s.connect(bp); bp.connect(g); g.connect(c.destination); s.start(t); s.stop(t + 0.06);
+    const o = c.createOscillator(); o.type = "triangle"; o.frequency.setValueAtTime(1900, t); o.frequency.exponentialRampToValueAtTime(820, t + 0.03);
+    const g2 = c.createGain(); g2.gain.setValueAtTime(0.1 * v, t); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+    o.connect(g2); g2.connect(c.destination); o.start(t); o.stop(t + 0.05);
   };
+  api.open = function () {
+    if (!api.enabled) return; const c = ensure(); if (!c) return; const t = c.currentTime;
+    const o = c.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(190, t); o.frequency.exponentialRampToValueAtTime(72, t + 0.2);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.4); api.click(0.8);
+  };
+  api.dud = function () {
+    if (!api.enabled) return; const c = ensure(); if (!c) return; const t = c.currentTime;
+    const o = c.createOscillator(); o.type = "sine"; o.frequency.value = 140;
+    const g = c.createGain(); g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.1);
+  };
+  return api;
+})();
 
-  // ---------- tiny synthesized click/clunk audio (no asset files) ----------
-  const Sound = (function () {
-    let ctx = null, noise = null;
-    const api = { enabled: true };
-    function ensure() {
-      if (!ctx) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return null;
-        try { ctx = new AC(); } catch (e) { return null; }
-      }
-      if (ctx.state === "suspended") ctx.resume();
-      return ctx;
-    }
-    api.ensure = ensure;
-    function noiseBuf(c) {
-      if (noise) return noise;
-      const len = Math.floor(c.sampleRate * 0.06);
-      noise = c.createBuffer(1, len, c.sampleRate);
-      const d = noise.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-      return noise;
-    }
-    // a crisp tactile "click": short filtered noise burst + a quick pitched tick
-    api.click = function (vol) {
-      if (!api.enabled) return;
-      const c = ensure(); if (!c) return;
-      const t = c.currentTime, v = vol == null ? 1 : vol;
-      const src = c.createBufferSource(); src.buffer = noiseBuf(c);
-      const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2700; bp.Q.value = 1.1;
-      const g = c.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.16 * v, t + 0.002);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
-      src.connect(bp); bp.connect(g); g.connect(c.destination);
-      src.start(t); src.stop(t + 0.06);
-      const o = c.createOscillator(); o.type = "triangle";
-      o.frequency.setValueAtTime(1900, t);
-      o.frequency.exponentialRampToValueAtTime(820, t + 0.03);
-      const g2 = c.createGain();
-      g2.gain.setValueAtTime(0.11 * v, t);
-      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
-      o.connect(g2); g2.connect(c.destination);
-      o.start(t); o.stop(t + 0.05);
-    };
-    // a soft tick for raking bounces
-    api.tick = function () {
-      if (!api.enabled) return;
-      const c = ensure(); if (!c) return;
-      const t = c.currentTime;
-      const src = c.createBufferSource(); src.buffer = noiseBuf(c);
-      const hp = c.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 3200;
-      const g = c.createGain();
-      g.gain.setValueAtTime(0.05, t);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.02);
-      src.connect(hp); hp.connect(g); g.connect(c.destination);
-      src.start(t); src.stop(t + 0.03);
-    };
-    // the satisfying clunk of the plug turning over
-    api.open = function () {
-      if (!api.enabled) return;
-      const c = ensure(); if (!c) return;
-      const t = c.currentTime;
-      const o = c.createOscillator(); o.type = "sine";
-      o.frequency.setValueAtTime(190, t);
-      o.frequency.exponentialRampToValueAtTime(72, t + 0.2);
-      const g = c.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.32, t + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
-      o.connect(g); g.connect(c.destination);
-      o.start(t); o.stop(t + 0.4);
-      api.click(0.8);
-    };
-    return api;
-  })();
+// ---------------- shared constants ----------------
+const N = 5;
+const BIT = [0.78, 0.34, 0.62, 0.20, 0.50];   // bitting fraction per pin
+const MAXBIT = 0.62;                           // max lift in world units
+const XS = [-1.5, -0.75, 0, 0.75, 1.5];        // chamber x positions
+const RP = 1.0;                                // plug radius
+const SHEAR = RP;                              // shear line height (plug top)
+const CH_BOTTOM = -0.62;                       // key pin rest bottom (keyway floor)
+const CH_TOP = 2.05;                           // spring anchor
+const DRIVER_LEN = 0.82;
+const PIN_R = 0.23;
 
-  function hidpi(canvas, cssH) {
-    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-    const cssW = canvas.clientWidth || canvas.parentElement.clientWidth;
-    canvas.style.height = cssH + "px";
-    canvas.width = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssH * dpr);
-    const ctx = canvas.getContext("2d");
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    return { ctx, w: cssW, h: cssH };
+// materials
+function mats() {
+  return {
+    plug: new THREE.MeshStandardMaterial({ color: 0xc6ccd3, metalness: 0.3, roughness: 0.25, transparent: true, opacity: 0.30, depthWrite: false }),
+    housing: new THREE.MeshStandardMaterial({ color: 0x9fb0c4, metalness: 0.0, roughness: 0.2, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false }),
+    key: new THREE.MeshStandardMaterial({ color: 0xd0d4da, metalness: 0.8, roughness: 0.3 }),
+    keyPin: new THREE.MeshStandardMaterial({ color: 0xc2c8d1, metalness: 0.9, roughness: 0.28 }),
+    driver: new THREE.MeshStandardMaterial({ color: 0xc8a12f, metalness: 0.85, roughness: 0.32 }),
+    spring: new THREE.MeshStandardMaterial({ color: 0x8d949e, metalness: 0.7, roughness: 0.4 }),
+  };
+}
+
+// helix curve for springs
+class Helix extends THREE.Curve {
+  constructor(r, turns) { super(); this.r = r; this.turns = turns; }
+  getPoint(t, target = new THREE.Vector3()) {
+    const a = this.turns * Math.PI * 2 * t;
+    return target.set(Math.cos(a) * this.r, t, Math.sin(a) * this.r);
+  }
+}
+
+// geometry caches (shared across figures)
+const G = {
+  pin: new THREE.CylinderGeometry(PIN_R, PIN_R, 1, 28),
+  keyTip: new THREE.CylinderGeometry(PIN_R, PIN_R * 0.2, 0.22, 28),
+  spring: new THREE.TubeGeometry(new Helix(PIN_R + 0.05, 6), 90, 0.028, 8, false),
+  plug: new THREE.CylinderGeometry(RP, RP, 4.4, 64),
+  shearLine: new THREE.CylinderGeometry(0.02, 0.02, 4.0, 12),
+};
+
+// build one lock into a parent; returns refs
+function buildLock(parent) {
+  const M = mats();
+  const group = new THREE.Group();
+  parent.add(group);
+
+  // housing: translucent rounded body
+  const housingGeo = new THREE.BoxGeometry(4.7, 3.5, 2.3);
+  const housing = new THREE.Mesh(housingGeo, M.housing);
+  housing.position.y = 0.43;
+  housing.renderOrder = 2;
+  group.add(housing);
+
+  // plug group (rotates about X). contains plug cylinder + key pins + key
+  const plugGroup = new THREE.Group();
+  group.add(plugGroup);
+
+  const plug = new THREE.Mesh(G.plug, M.plug);
+  plug.rotation.z = Math.PI / 2; // align cylinder axis to X
+  plugGroup.add(plug);
+
+  // shear line: a thin marker at the plug/housing boundary (fixed in housing frame)
+  const shearLine = new THREE.Mesh(G.shearLine, new THREE.MeshStandardMaterial({ color: 0x2a6fb5, metalness: 0.1, roughness: 0.5, emissive: 0x2a6fb5, emissiveIntensity: 0.5 }));
+  shearLine.rotation.z = Math.PI / 2; // along X
+  shearLine.position.set(0, SHEAR, 0);
+  group.add(shearLine);
+
+  const keyPins = [], driverPins = [], springs = [];
+  for (let i = 0; i < N; i++) {
+    // key pin (steel) with conical tip, in plugGroup
+    const kp = new THREE.Group();
+    const body = new THREE.Mesh(G.pin, M.keyPin);
+    body.castShadow = true;
+    kp.add(body);
+    const tip = new THREE.Mesh(G.keyTip, M.keyPin);
+    kp.add(tip);
+    kp.position.x = XS[i];
+    plugGroup.add(kp);
+    keyPins.push({ grp: kp, body, tip, bit: BIT[i] * MAXBIT });
+
+    // driver pin (brass) in housing frame (group, not plug)
+    const dp = new THREE.Mesh(G.pin, M.driver.clone());
+    dp.castShadow = true;
+    dp.position.x = XS[i];
+    group.add(dp);
+    driverPins.push({ mesh: dp });
+
+    // spring above driver, in housing frame
+    const sp = new THREE.Mesh(G.spring, M.spring);
+    sp.position.x = XS[i];
+    group.add(sp);
+    springs.push({ mesh: sp });
   }
 
-  function rr(ctx, x, y, w, h, r) {
-    r = Math.min(r, w / 2, h / 2);
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
+  // key (toothed blade) in plugGroup, slides along X
+  const key = new THREE.Group();
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.16, 0.42), M.key);
+  blade.position.y = CH_BOTTOM - 0.12;
+  blade.castShadow = true;
+  key.add(blade);
+  for (let i = 0; i < N; i++) {
+    const h = BIT[i] * MAXBIT;
+    const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.34, Math.max(0.04, h), 0.4), M.key);
+    tooth.position.set(XS[i], CH_BOTTOM - 0.04 + Math.max(0.04, h) / 2, 0);
+    key.add(tooth);
   }
+  const bow = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.09, 12, 28), M.key);
+  bow.position.set(2.35, CH_BOTTOM - 0.04, 0);
+  bow.rotation.y = Math.PI / 2;
+  key.add(bow);
+  plugGroup.add(key);
 
-  // a metal pin with a rounded top; optional pointed bottom
-  function drawPin(ctx, cx, topY, botY, w, fill, edge, pointed) {
-    const x = cx - w / 2;
-    const r = w / 2;
-    ctx.beginPath();
-    ctx.moveTo(x, topY + r);
-    ctx.arc(cx, topY + r, r, Math.PI, 0);
-    ctx.lineTo(x + w, botY - (pointed ? w * 0.55 : 0));
-    if (pointed) {
-      ctx.lineTo(cx, botY);
-      ctx.lineTo(x, botY - w * 0.55);
+  return { group, plugGroup, housing, keyPins, driverPins, springs, key, shearLine };
+}
+
+// position pins for a given per-pin lift array (lift in world units added to key pin)
+function layoutPins(lock, lifts, setFlags) {
+  for (let i = 0; i < N; i++) {
+    const kp = lock.keyPins[i];
+    const lift = lifts[i];
+    const keyBottom = CH_BOTTOM + lift;
+    const cut = SHEAR - kp.bit + lift;            // top of key pin
+    const len = cut - keyBottom;
+    kp.body.scale.y = len;
+    kp.body.position.y = (keyBottom + cut) / 2;
+    kp.tip.position.y = keyBottom - 0.0;          // tip just below body
+    kp.tip.rotation.x = Math.PI;                   // point down
+
+    // driver pin
+    let driverBottom;
+    if (setFlags && setFlags[i]) driverBottom = SHEAR;       // resting on the ledge
+    else driverBottom = cut;                                  // sitting on the key pin
+    const dTop = driverBottom + DRIVER_LEN;
+    const dp = lock.driverPins[i].mesh;
+    dp.scale.y = DRIVER_LEN;
+    dp.position.y = driverBottom + DRIVER_LEN / 2;
+
+    // spring above driver up to CH_TOP
+    const sLen = Math.max(0.12, CH_TOP - dTop);
+    const sp = lock.springs[i].mesh;
+    sp.scale.y = sLen;
+    sp.position.y = dTop;
+  }
+}
+
+// key slide + insertion lift
+function applyKey(lock, insert) {
+  // key slides from outside (+X) to centered
+  lock.key.position.x = (1 - insert) * 4.2;
+  lock.key.visible = insert > 0.001;
+}
+
+// ---------------- scene scaffolding ----------------
+function makeFigure(canvas, opts) {
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.localClippingEnabled = true;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+  camera.position.set(4.4, 3.0, 7.2);
+
+  const controls = new OrbitControls(camera, canvas);
+  controls.target.set(0, 0.35, 0);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.enablePan = false; controls.enableZoom = false;
+  controls.minPolarAngle = 0.35; controls.maxPolarAngle = 1.62;
+  controls.rotateSpeed = 0.9;
+
+  // lights
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x3a4250, 0.6));
+  const key = new THREE.DirectionalLight(0xffffff, 2.0);
+  key.position.set(5, 9, 6); key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.camera.near = 1; key.shadow.camera.far = 30;
+  key.shadow.camera.left = -6; key.shadow.camera.right = 6;
+  key.shadow.camera.top = 6; key.shadow.camera.bottom = -6;
+  key.shadow.bias = -0.0004;
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xdfe8ff, 0.5);
+  fill.position.set(-6, 3, -4); scene.add(fill);
+
+  // contact shadow plane
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.16 }));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -1.55; ground.receiveShadow = true;
+  scene.add(ground);
+
+  function resize() {
+    const w = canvas.clientWidth || canvas.parentElement.clientWidth;
+    const h = opts.height;
+    canvas.style.height = h + "px";
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  return { renderer, scene, camera, controls, resize };
+}
+
+// cutaway = hide the translucent outer housing so the bare mechanism is clear
+function setCutaway(lock, on) {
+  lock.housing.visible = !on;
+}
+
+// =========================================================
+// FIGURE 1: anatomy
+// =========================================================
+(function () {
+  const canvas = document.getElementById("cv-anatomy");
+  const slInsert = document.getElementById("sl-insert");
+  const ckCut = document.getElementById("ck-cut");
+  const stInsert = document.getElementById("st-insert");
+  const fig = makeFigure(canvas, { height: 420 });
+  const lock = buildLock(fig.scene);
+  setCutaway(lock, true);
+
+  function update() {
+    const ins = parseFloat(slInsert.value);
+    const lifts = lock.keyPins.map(kp => kp.bit * ins);
+    layoutPins(lock, lifts, null);
+    applyKey(lock, ins);
+    stInsert.textContent = ins < 0.02 ? "removed" : ins > 0.98 ? "fully in" : "sliding in";
+  }
+  ckCut.addEventListener("change", () => setCutaway(lock, ckCut.checked));
+
+  function loop() {
+    update(); fig.controls.update();
+    fig.renderer.render(fig.scene, fig.camera);
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// =========================================================
+// FIGURE 2: shear line / turning
+// =========================================================
+(function () {
+  const canvas = document.getElementById("cv-shear");
+  const ckKey = document.getElementById("ck-key2");
+  const slTurn = document.getElementById("sl-turn");
+  const stShear = document.getElementById("st-shear");
+  const fig = makeFigure(canvas, { height: 420 });
+  const lock = buildLock(fig.scene);
+  setCutaway(lock, true);
+  let angle = 0;
+
+  function update() {
+    const hasKey = ckKey.checked;
+    const turn = parseFloat(slTurn.value);
+    const maxAngle = 0.95;
+    const target = hasKey ? turn * maxAngle : Math.min(turn, 0.08) * maxAngle;
+    angle += (target - angle) * 0.18;
+    lock.plugGroup.rotation.x = angle;
+
+    const lifts = lock.keyPins.map(kp => hasKey ? kp.bit : 0);
+    layoutPins(lock, lifts, null);
+    applyKey(lock, hasKey ? 1 : 0);
+
+    if (hasKey) {
+      stShear.textContent = turn > 0.9 ? "unlocked ✓" : turn > 0.05 ? "turning freely" : "ready, turn it";
+      stShear.className = "status " + (turn > 0.9 ? "open" : "good");
     } else {
-      ctx.lineTo(x, botY);
+      stShear.textContent = turn > 0.1 ? "jammed, won't turn" : "locked";
+      stShear.className = "status " + (turn > 0.1 ? "bind" : "");
     }
-    ctx.closePath();
-    const g = ctx.createLinearGradient(x, 0, x + w, 0);
-    g.addColorStop(0, edge);
-    g.addColorStop(0.32, fill);
-    g.addColorStop(0.62, fill);
-    g.addColorStop(1, edge);
-    ctx.fillStyle = g;
-    ctx.fill();
-    ctx.strokeStyle = edge;
-    ctx.lineWidth = 1;
-    ctx.stroke();
+  }
+  function loop() {
+    update(); fig.controls.update();
+    fig.renderer.render(fig.scene, fig.camera);
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// =========================================================
+// FIGURE 3: single pin picking
+// =========================================================
+(function () {
+  const canvas = document.getElementById("cv-spp");
+  const ckTension = document.getElementById("ck-tension");
+  const stSpp = document.getElementById("st-spp");
+  const btReset = document.getElementById("bt-spp-reset");
+  const ckSound = document.getElementById("ck-sound");
+  const fig = makeFigure(canvas, { height: 440 });
+  const lock = buildLock(fig.scene);
+  setCutaway(lock, true);
+  lock.key.visible = false;   // no key in picking; you use a pick
+
+  let order, setFlags, lifts, anim, angle, opened;
+  function init() {
+    const tol = []; for (let i = 0; i < N; i++) tol.push([i, Math.random()]);
+    tol.sort((a, b) => b[1] - a[1]); order = tol.map(t => t[0]);
+    setFlags = [false, false, false, false, false];
+    lifts = [0, 0, 0, 0, 0];
+    anim = [0, 0, 0, 0, 0];   // animated lift target per pin (for the just-picked one)
+    angle = 0; opened = false;
+  }
+  init();
+
+  function setCount() { return setFlags.filter(Boolean).length; }
+  function binding() {
+    if (!ckTension.checked || opened) return -1;
+    for (const i of order) if (!setFlags[i]) return i;
+    return -1;
   }
 
-  function drawSpring(ctx, cx, topY, botY, w) {
-    ctx.strokeStyle = PAL.spring;
-    ctx.lineWidth = 1.4;
-    const coils = 5;
-    const span = botY - topY;
-    ctx.beginPath();
-    ctx.moveTo(cx, topY);
-    for (let i = 0; i <= coils; i++) {
-      const t = i / coils;
-      const y = topY + t * span;
-      const dir = i % 2 === 0 ? -1 : 1;
-      ctx.lineTo(cx + dir * (w / 2 - 1.5), y);
-    }
-    ctx.lineTo(cx, botY);
-    ctx.stroke();
+  // raycasting to click a pin
+  const ray = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  function pickPin(ev) {
+    const r = canvas.getBoundingClientRect();
+    const cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+    const cy = (ev.touches ? ev.touches[0].clientY : ev.clientY) - r.top;
+    mouse.x = (cx / r.width) * 2 - 1;
+    mouse.y = -(cy / r.height) * 2 + 1;
+    ray.setFromCamera(mouse, fig.camera);
+    const targets = lock.keyPins.map(kp => kp.body);
+    const hits = ray.intersectObjects(targets, false);
+    if (!hits.length) return -1;
+    const m = hits[0].object;
+    return lock.keyPins.findIndex(kp => kp.body === m);
   }
 
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
-  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+  let downPos = null, moved = false;
+  canvas.addEventListener("pointerdown", e => { Sound.ensure(); downPos = [e.clientX, e.clientY]; moved = false; });
+  canvas.addEventListener("pointermove", e => { if (downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) > 6) moved = true; });
+  canvas.addEventListener("pointerup", e => {
+    if (moved) { downPos = null; return; }   // it was a rotate drag
+    downPos = null;
+    if (!ckTension.checked || opened) return;
+    const idx = pickPin(e);
+    if (idx < 0) return;
+    const b = binding();
+    if (idx === b) {
+      setFlags[idx] = true;
+      Sound.click();
+    } else {
+      anim[idx] = 1; // nudge then fall
+      Sound.dud();
+    }
+  });
 
-  // deterministic-ish pseudo random (so reshuffle gives variety without Date/Math.random restrictions issues)
-  let _seed = 20260616;
-  function rnd() { _seed = (_seed * 1103515245 + 12345) & 0x7fffffff; return _seed / 0x7fffffff; }
+  ckTension.addEventListener("change", () => Sound.ensure());
+  ckSound.addEventListener("change", () => { Sound.enabled = ckSound.checked; Sound.ensure(); });
+  btReset.addEventListener("click", () => { ckTension.checked = false; init(); });
 
-  const NPINS = 5;
+  function update() {
+    const b = binding();
+    const sc = setCount();
+    if (sc === N && !opened) { opened = true; Sound.open(); }
+    const targetAngle = opened ? 0.9 : (ckTension.checked ? 0.02 + sc * 0.02 : 0);
+    angle += (targetAngle - angle) * 0.12;
+    lock.plugGroup.rotation.x = angle;
 
-  // shared geometry given canvas size + a layout describing the lock cross-section
-  function lockGeo(w, h) {
-    const g = {};
-    g.cx = w / 2;
-    g.bodyW = Math.min(w - 104, 540);
-    g.bodyX = g.cx - g.bodyW / 2;
-    g.housingTop = h * 0.12;
-    g.shearY = h * 0.52;            // shear line (top of plug)
-    g.plugBot = h * 0.78;           // bottom of plug bore
-    g.keywayY = h * 0.86;           // where the key sits
-    g.bodyBot = h * 0.95;
-    g.chamberTop = h * 0.16;        // spring anchor
-    g.pinW = clamp(g.bodyW / (NPINS * 2.1), 16, 30);
-    g.gap = g.bodyW / NPINS;
-    g.firstX = g.bodyX + g.gap / 2;
-    g.chamberX = i => g.firstX + i * g.gap;
-    return g;
+    for (let i = 0; i < N; i++) {
+      let target;
+      if (setFlags[i]) target = lock.keyPins[i].bit;        // sits at shear
+      else if (anim[i] > 0.01) { target = lock.keyPins[i].bit * 0.85; anim[i] *= 0.86; } // nudge, then relax
+      else target = 0;
+      lifts[i] += (target - lifts[i]) * 0.25;
+
+      // glow the binding pin
+      const isBind = (i === b);
+      const km = lock.keyPins[i].body.material;
+      const dm = lock.driverPins[i].mesh.material;
+      km.emissive = km.emissive || new THREE.Color();
+      if (isBind) { km.emissive.setHex(0xe0772f); km.emissiveIntensity = 0.55; }
+      else { km.emissiveIntensity = 0; }
+      if (setFlags[i]) { dm.emissive.setHex(0x2f9e63); dm.emissiveIntensity = 0.4; }
+      else { dm.emissiveIntensity = 0; }
+    }
+    layoutPins(lock, lifts, setFlags);
+
+    if (opened) { stSpp.textContent = "open ✓ · all five set"; stSpp.className = "status open"; }
+    else if (!ckTension.checked) { stSpp.textContent = "turn on tension to begin"; stSpp.className = "status"; }
+    else if (b >= 0) { stSpp.textContent = "pin " + (b + 1) + " binding · " + sc + "/5 set"; stSpp.className = "status bind"; }
   }
 
-  // draws housing + plug shell. plugAngle in radians (small), rotates plug + contents about keyway center.
-  function drawShell(ctx, g, plugAngle) {
-    // housing body
-    rr(ctx, g.bodyX, g.housingTop, g.bodyW, g.bodyBot - g.housingTop, 14);
-    ctx.fillStyle = PAL.housing; ctx.fill();
-    ctx.strokeStyle = PAL.housingEdge; ctx.lineWidth = 1.5; ctx.stroke();
+  // ensure driver materials have emissive color object
+  lock.driverPins.forEach(d => { d.mesh.material.emissive = new THREE.Color(0x000000); });
+  lock.keyPins.forEach(k => { k.body.material = k.body.material.clone(); k.body.material.emissive = new THREE.Color(0x000000); });
 
-    // plug region (under shear line), drawn rotated
-    const pivotX = g.cx, pivotY = g.keywayY;
-    ctx.save();
-    ctx.translate(pivotX, pivotY);
-    ctx.rotate(plugAngle);
-    ctx.translate(-pivotX, -pivotY);
-    rr(ctx, g.bodyX + 3, g.shearY, g.bodyW - 6, g.plugBot - g.shearY + 22, 10);
-    ctx.fillStyle = PAL.plug; ctx.fill();
-    ctx.strokeStyle = PAL.plugEdge; ctx.lineWidth = 1.4; ctx.stroke();
-    ctx.restore();
-
-    return { pivotX, pivotY };
+  function loop() {
+    update(); fig.controls.update();
+    fig.renderer.render(fig.scene, fig.camera);
+    requestAnimationFrame(loop);
   }
-
-  function drawShearLine(ctx, g) {
-    ctx.save();
-    ctx.setLineDash([6, 5]);
-    ctx.strokeStyle = PAL.shear;
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.moveTo(g.bodyX - 6, g.shearY);
-    ctx.lineTo(g.bodyX + g.bodyW + 6, g.shearY);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // ============================================================
-  // FIGURE 1: ANATOMY
-  // ============================================================
-  (function () {
-    const canvas = document.getElementById("cv-anatomy");
-    const slInsert = document.getElementById("sl-insert");
-    const ckLabels = document.getElementById("ck-labels");
-    const stInsert = document.getElementById("st-insert");
-    const H = 320;
-    let view = hidpi(canvas, H);
-    let g = lockGeo(view.w, H);
-    const bitting = [0.78, 0.34, 0.62, 0.2, 0.5]; // fraction of max lift per pin
-
-    function resize() { view = hidpi(canvas, H); g = lockGeo(view.w, H); }
-    window.addEventListener("resize", resize);
-
-    function draw() {
-      const ctx = view.ctx, w = view.w;
-      ctx.clearRect(0, 0, w, H);
-      drawShell(ctx, g, 0);
-
-      const insert = parseFloat(slInsert.value);
-      const maxLift = (g.keywayY - g.shearY) * 0.62;
-
-      // chambers + pins
-      for (let i = 0; i < NPINS; i++) {
-        const cx = g.chamberX(i);
-        const lift = bitting[i] * maxLift * insert;
-        const keyBot = g.keywayY - lift;
-        const keyTop = keyBot - (g.keywayY - g.shearY) - 6; // key pin length so rest top below shear
-        const driverBot = keyTop;
-        const driverLen = (g.shearY - g.chamberTop) * 0.62;
-        const driverTop = driverBot - driverLen;
-
-        // chamber bore (subtle)
-        ctx.fillStyle = "#f6f8fa";
-        ctx.fillRect(cx - g.pinW / 2 - 2, g.chamberTop, g.pinW + 4, g.keywayY - g.chamberTop);
-
-        drawSpring(ctx, cx, g.chamberTop, driverTop, g.pinW);
-        drawPin(ctx, cx, driverTop, driverBot, g.pinW, PAL.driver, PAL.driverEdge, false);
-        drawPin(ctx, cx, keyTop, keyBot, g.pinW, PAL.keyPin, PAL.keyPinEdge, true);
-      }
-
-      drawShearLine(ctx, g);
-
-      // key sliding in from the right
-      drawKey(ctx, g, insert, bitting, maxLift);
-
-      if (ckLabels.checked) drawLabels(ctx, g);
-    }
-
-    function drawKey(ctx, g, insert, bitting, maxLift) {
-      const bladeY = g.keywayY + 1;
-      const bladeH = g.bodyBot - g.keywayY - 6;
-      const fullLen = g.bodyW + 70;
-      const xRight = g.bodyX + g.bodyW + 80;
-      const xLeft = xRight - fullLen * insert;
-      // blade
-      ctx.fillStyle = PAL.key; ctx.strokeStyle = PAL.keyEdge; ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(xRight, bladeY + bladeH);
-      ctx.lineTo(xLeft, bladeY + bladeH);
-      // toothed top edge over the pin columns
-      const topPts = [];
-      for (let i = 0; i < NPINS; i++) {
-        const cx = g.chamberX(i);
-        const toothY = bladeY - bitting[i] * maxLift;
-        topPts.push([cx, toothY]);
-      }
-      ctx.lineTo(xLeft, bladeY - bitting[0] * maxLift * 0.2);
-      for (const p of topPts) {
-        if (p[0] >= xLeft - 2 && p[0] <= xRight) ctx.lineTo(p[0], p[1]);
-      }
-      ctx.lineTo(Math.min(xRight, g.bodyX + g.bodyW + 8), bladeY - 2);
-      ctx.lineTo(xRight, bladeY + 2);
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-      // bow (handle) when mostly out
-      if (insert < 0.98) {
-        const bx = xRight + 6;
-        rr(ctx, bx, bladeY - 18, 34, bladeH + 30, 8);
-        ctx.fillStyle = PAL.key; ctx.fill(); ctx.stroke();
-      }
-    }
-
-    function drawLabels(ctx, g) {
-      ctx.font = "12.5px -apple-system, system-ui, sans-serif";
-      ctx.fillStyle = PAL.text;
-      ctx.textBaseline = "middle";
-      function tag(text, x, y, align) {
-        ctx.textAlign = align || "left";
-        ctx.fillText(text, x, y);
-      }
-      ctx.fillStyle = PAL.shear;
-      tag("shear line", view.w - 4, g.shearY, "right");
-      ctx.fillStyle = PAL.text;
-      tag("housing", g.bodyX + 8, g.housingTop + 12, "left");
-      tag("driver pins", g.cx, g.chamberTop - 4, "center");
-      tag("key pins", g.bodyX + 8, (g.shearY + g.keywayY) / 2 + 6, "left");
-      tag("plug", g.bodyX + g.bodyW - 8, g.plugBot + 6, "right");
-    }
-
-    function status() {
-      const v = parseFloat(slInsert.value);
-      stInsert.textContent = v < 0.02 ? "removed" : v > 0.98 ? "fully inserted" : "sliding in";
-    }
-
-    let raf;
-    function loop() { draw(); status(); raf = requestAnimationFrame(loop); }
-    slInsert.addEventListener("input", () => {});
-    loop();
-  })();
-
-  // ============================================================
-  // FIGURE 2: SHEAR LINE / TURNING
-  // ============================================================
-  (function () {
-    const canvas = document.getElementById("cv-shear");
-    const ckKey = document.getElementById("ck-key2");
-    const slTurn = document.getElementById("sl-turn");
-    const stShear = document.getElementById("st-shear");
-    const H = 320;
-    let view = hidpi(canvas, H);
-    let g = lockGeo(view.w, H);
-    const bitting = [0.78, 0.34, 0.62, 0.2, 0.5];
-    let angle = 0, wasUnlocked = false;
-
-    function resize() { view = hidpi(canvas, H); g = lockGeo(view.w, H); }
-    window.addEventListener("resize", resize);
-    ckKey.addEventListener("change", () => Sound.ensure());
-    slTurn.addEventListener("input", () => Sound.ensure());
-
-    function draw() {
-      const ctx = view.ctx, w = view.w;
-      ctx.clearRect(0, 0, w, H);
-
-      const hasKey = ckKey.checked;
-      const turn = parseFloat(slTurn.value);
-      const unlocked = hasKey && turn > 0.9;
-      if (unlocked && !wasUnlocked) Sound.open();
-      wasUnlocked = unlocked;
-      const maxAngle = 0.5; // ~28deg
-      // if no key, driver pins bridge shear line -> blocked at small angle
-      const blocked = hasKey ? 0 : 1;
-      const allowed = hasKey ? turn * maxAngle : Math.min(turn, 0.09) * maxAngle;
-      angle = lerp(angle, allowed, 0.25);
-
-      drawShell(ctx, g, angle);
-
-      const maxLift = (g.keywayY - g.shearY) * 0.62;
-      const pivotX = g.cx, pivotY = g.keywayY;
-
-      for (let i = 0; i < NPINS; i++) {
-        const cx = g.chamberX(i);
-        const lift = hasKey ? bitting[i] * maxLift : 0;
-        const keyBot = g.keywayY - lift;
-        const keyTop = keyBot - (g.keywayY - g.shearY) - 6;
-        const driverBot = keyTop;
-        const driverLen = (g.shearY - g.chamberTop) * 0.62;
-        const driverTop = driverBot - driverLen;
-
-        ctx.fillStyle = "#f6f8fa";
-        ctx.fillRect(cx - g.pinW / 2 - 2, g.chamberTop, g.pinW + 4, g.shearY - g.chamberTop);
-
-        // driver pin + spring stay with housing (vertical)
-        drawSpring(ctx, cx, g.chamberTop, driverTop, g.pinW);
-        // driver pin descends across shear line when no key -> shows blocking
-        drawPin(ctx, cx, driverTop, driverBot, g.pinW, PAL.driver, PAL.driverEdge, false);
-
-        // key pin rotates with the plug
-        ctx.save();
-        ctx.translate(pivotX, pivotY); ctx.rotate(angle); ctx.translate(-pivotX, -pivotY);
-        drawPin(ctx, cx, keyTop, keyBot, g.pinW, PAL.keyPin, PAL.keyPinEdge, true);
-        ctx.restore();
-      }
-
-      drawShearLine(ctx, g);
-
-      // turn indicator arrow
-      drawTurnArc(ctx, g, angle, maxAngle);
-
-      if (!hasKey && turn > 0.12) {
-        // red block markers where drivers cross shear line
-        ctx.fillStyle = "rgba(214,80,40,0.9)";
-        ctx.font = "12.5px -apple-system, system-ui, sans-serif";
-        ctx.textAlign = "center"; ctx.textBaseline = "bottom";
-        ctx.fillText("driver pins jam the shear line", g.cx, g.shearY - 8);
-      }
-
-      stShear.textContent = hasKey
-        ? (turn > 0.9 ? "unlocked ✓" : turn > 0.05 ? "turning freely" : "ready, turn it")
-        : (turn > 0.1 ? "jammed, won't turn" : "locked");
-      stShear.className = "status " + (hasKey ? (turn > 0.9 ? "open" : "good") : (turn > 0.1 ? "bind" : ""));
-    }
-
-    function drawTurnArc(ctx, g, angle, maxAngle) {
-      const r = g.bodyW / 2 + 22;
-      ctx.save();
-      ctx.strokeStyle = "#c2c8cf"; ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(g.cx, g.keywayY, r, -Math.PI * 0.5 - maxAngle, -Math.PI * 0.5 + 0.02);
-      ctx.stroke();
-      // current position dot
-      const a = -Math.PI * 0.5 - angle;
-      ctx.fillStyle = PAL.shear;
-      ctx.beginPath();
-      ctx.arc(g.cx + r * Math.cos(a), g.keywayY + r * Math.sin(a), 4.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    let raf;
-    function loop() { draw(); raf = requestAnimationFrame(loop); }
-    loop();
-  })();
-
-  // ============================================================
-  // FIGURE 3: BINDING / TOLERANCES
-  // ============================================================
-  (function () {
-    const canvas = document.getElementById("cv-bind");
-    const slTension = document.getElementById("sl-tension");
-    const stBind = document.getElementById("st-bind");
-    const btReshuffle = document.getElementById("bt-bind-reshuffle");
-    const H = 300;
-    let view = hidpi(canvas, H);
-    let g = lockGeo(view.w, H);
-    // per-pin horizontal misalignment (exaggerated), the largest binds first
-    let offsets = [];
-    function reshuffle() {
-      offsets = [];
-      for (let i = 0; i < NPINS; i++) offsets.push(0.25 + rnd() * 0.75);
-    }
-    reshuffle();
-
-    function resize() { view = hidpi(canvas, H); g = lockGeo(view.w, H); }
-    window.addEventListener("resize", resize);
-
-    function bindingIndex() {
-      let idx = 0, mx = -1;
-      for (let i = 0; i < NPINS; i++) if (offsets[i] > mx) { mx = offsets[i]; idx = i; }
-      return idx;
-    }
-
-    function draw() {
-      const ctx = view.ctx, w = view.w;
-      ctx.clearRect(0, 0, w, H);
-      const tension = parseFloat(slTension.value);
-      const maxAngle = 0.07;
-      const angle = tension * maxAngle;
-      drawShell(ctx, g, angle);
-
-      const bind = bindingIndex();
-      const pivotX = g.cx, pivotY = g.keywayY;
-
-      for (let i = 0; i < NPINS; i++) {
-        const cx = g.chamberX(i);
-        const keyBot = g.keywayY;
-        const keyTop = keyBot - (g.keywayY - g.shearY) - 6;
-        const driverBot = keyTop;
-        const driverLen = (g.shearY - g.chamberTop) * 0.6;
-        const driverTop = driverBot - driverLen;
-
-        ctx.fillStyle = "#f6f8fa";
-        ctx.fillRect(cx - g.pinW / 2 - 2, g.chamberTop, g.pinW + 4, g.shearY - g.chamberTop);
-
-        drawSpring(ctx, cx, g.chamberTop, driverTop, g.pinW);
-        drawPin(ctx, cx, driverTop, driverBot, g.pinW, PAL.driver, PAL.driverEdge, false);
-
-        ctx.save();
-        ctx.translate(pivotX, pivotY); ctx.rotate(angle); ctx.translate(-pivotX, -pivotY);
-        // glow the binding pin once there is tension
-        if (i === bind && tension > 0.06) {
-          ctx.shadowColor = PAL.bindGlow; ctx.shadowBlur = 16;
-        }
-        drawPin(ctx, cx, keyTop, keyBot, g.pinW, PAL.keyPin, PAL.keyPinEdge, true);
-        ctx.shadowBlur = 0;
-        ctx.restore();
-      }
-
-      drawShearLine(ctx, g);
-
-      if (tension > 0.06) {
-        const cx = g.chamberX(bind);
-        ctx.fillStyle = PAL.bindGlow;
-        ctx.font = "12.5px -apple-system, system-ui, sans-serif";
-        ctx.textAlign = "center"; ctx.textBaseline = "bottom";
-        ctx.fillText("binding", cx, g.chamberTop - 3);
-      }
-
-      stBind.textContent = tension < 0.06 ? "no tension" : "pin " + (bind + 1) + " is binding";
-      stBind.className = "status " + (tension < 0.06 ? "" : "bind");
-    }
-
-    btReshuffle.addEventListener("click", reshuffle);
-    let raf;
-    function loop() { draw(); raf = requestAnimationFrame(loop); }
-    loop();
-  })();
-
-  // ============================================================
-  // FIGURE 4: SINGLE PIN PICKING (the centerpiece)
-  // ============================================================
-  (function () {
-    const canvas = document.getElementById("cv-spp");
-    const ckTension = document.getElementById("ck-tension");
-    const stSpp = document.getElementById("st-spp");
-    const btReset = document.getElementById("bt-spp-reset");
-    const H = 360;
-    let view = hidpi(canvas, H);
-    let g = lockGeo(view.w, H);
-
-    let pins, order, angle, picking, pickX, pickY, opened, overset;
-
-    function init() {
-      pins = [];
-      const bits = [0.78, 0.34, 0.62, 0.2, 0.5];
-      // shuffle binding order from random tolerances
-      const tol = [];
-      for (let i = 0; i < NPINS; i++) tol.push([i, rnd()]);
-      tol.sort((a, b) => b[1] - a[1]);
-      order = tol.map(t => t[0]);
-      for (let i = 0; i < NPINS; i++) {
-        pins.push({ bitting: bits[i], lift: 0, set: false, over: false });
-      }
-      angle = 0; picking = false; opened = false; overset = false;
-    }
-    init();
-
-    function resize() { view = hidpi(canvas, H); g = lockGeo(view.w, H); }
-    window.addEventListener("resize", resize);
-
-    function setCount() { return pins.reduce((a, p) => a + (p.set ? 1 : 0), 0); }
-    function currentBinding() {
-      if (!ckTension.checked || opened) return -1;
-      for (const idx of order) if (!pins[idx].set) return idx;
-      return -1;
-    }
-
-    function maxLift() { return (g.keywayY - g.shearY) * 0.62; }
-    function requiredLift(i) { return pins[i].bitting * maxLift(); }
-
-    // pointer -> canvas css coords
-    function pt(e) {
-      const r = canvas.getBoundingClientRect();
-      const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
-      const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
-      return { x: cx, y: cy };
-    }
-    function nearestPin(x) {
-      let idx = 0, md = 1e9;
-      for (let i = 0; i < NPINS; i++) {
-        const d = Math.abs(x - g.chamberX(i));
-        if (d < md) { md = d; idx = i; }
-      }
-      return md < g.gap * 0.6 ? idx : -1;
-    }
-
-    function down(e) {
-      e.preventDefault();
-      Sound.ensure();
-      const p = pt(e);
-      picking = true; pickX = p.x; pickY = p.y;
-    }
-    function move(e) {
-      if (!picking) return;
-      e.preventDefault();
-      const p = pt(e);
-      pickX = p.x; pickY = p.y;
-    }
-    function up() {
-      picking = false;
-      // unset, non-set pins fall back; clear overset flags
-      for (let i = 0; i < NPINS; i++) if (!pins[i].set) pins[i].over = false;
-    }
-
-    canvas.addEventListener("mousedown", down);
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-    canvas.addEventListener("touchstart", down, { passive: false });
-    canvas.addEventListener("touchmove", move, { passive: false });
-    window.addEventListener("touchend", up);
-
-    function update() {
-      const bind = currentBinding();
-
-      // apply pick lift to the actively-pointed pin
-      if (picking) {
-        const idx = nearestPin(pickX);
-        if (idx >= 0 && !pins[idx].set) {
-          const targetLift = clamp(g.keywayY - pickY, 0, maxLift() + 26);
-          pins[idx].lift = targetLift;
-          const req = requiredLift(idx);
-          if (idx === bind) {
-            if (targetLift >= req - 8 && targetLift <= req + 52) {
-              // SET: a firm push to the shear line catches the ledge
-              pins[idx].set = true;
-              pins[idx].lift = req;
-              pins[idx].over = false;
-              Sound.click();
-            } else if (targetLift > req + 52) {
-              pins[idx].over = true;  // jammed it past the shear line
-            } else {
-              pins[idx].over = false;
-            }
-          }
-        }
-      }
-      // relax pins that aren't being touched and aren't set
-      for (let i = 0; i < NPINS; i++) {
-        const touched = picking && nearestPin(pickX) === i;
-        if (!pins[i].set && !touched) pins[i].lift = lerp(pins[i].lift, 0, 0.3);
-        if (pins[i].set) pins[i].lift = lerp(pins[i].lift, requiredLift(i), 0.4);
-      }
-
-      // plug angle: grows with sets + a little when tensioned
-      const sc = setCount();
-      if (sc === NPINS && !opened) { opened = true; Sound.open(); }
-      let targetAngle;
-      if (opened) targetAngle = 0.5;
-      else if (ckTension.checked) targetAngle = 0.012 + sc * 0.016;
-      else targetAngle = 0;
-      angle = lerp(angle, targetAngle, opened ? 0.12 : 0.25);
-
-      overset = pins.some(p => p.over);
-    }
-
-    function draw() {
-      const ctx = view.ctx, w = view.w;
-      ctx.clearRect(0, 0, w, H);
-      drawShell(ctx, g, angle);
-
-      const bind = currentBinding();
-      const pivotX = g.cx, pivotY = g.keywayY;
-      const ledgeW = Math.min(g.pinW * 0.5, angle / 0.03 * g.pinW * 0.5);
-
-      for (let i = 0; i < NPINS; i++) {
-        const cx = g.chamberX(i);
-        const keyBot = g.keywayY - pins[i].lift;
-        const keyLen = (g.keywayY - g.shearY) + 6;
-        const keyTop = keyBot - keyLen;
-        const driverLen = (g.shearY - g.chamberTop) * 0.6;
-
-        // driver pin: if set, it rests on the ledge at shear line; else sits on key pin
-        let driverBot;
-        if (pins[i].set) driverBot = g.shearY - 1;
-        else driverBot = keyTop;
-        const driverTop = driverBot - driverLen;
-
-        ctx.fillStyle = "#f6f8fa";
-        ctx.fillRect(cx - g.pinW / 2 - 2, g.chamberTop, g.pinW + 4, g.shearY - g.chamberTop);
-
-        drawSpring(ctx, cx, g.chamberTop, driverTop, g.pinW);
-
-        // ledge under set driver pins
-        if (pins[i].set && ledgeW > 0.5) {
-          ctx.fillStyle = PAL.ledge;
-          ctx.fillRect(cx - g.pinW / 2, g.shearY - 2, ledgeW, 4);
-        }
-
-        // driver pin glow when set
-        if (pins[i].set) { ctx.shadowColor = PAL.setGlow; ctx.shadowBlur = 10; }
-        drawPin(ctx, cx, driverTop, driverBot, g.pinW, PAL.driver, PAL.driverEdge, false);
-        ctx.shadowBlur = 0;
-
-        // key pin rotates with plug
-        ctx.save();
-        ctx.translate(pivotX, pivotY); ctx.rotate(angle); ctx.translate(-pivotX, -pivotY);
-        if (i === bind) { ctx.shadowColor = pins[i].over ? "#d63b1f" : PAL.bindGlow; ctx.shadowBlur = 18; }
-        drawPin(ctx, cx, keyTop, keyBot, g.pinW, PAL.keyPin, PAL.keyPinEdge, true);
-        ctx.shadowBlur = 0;
-        ctx.restore();
-      }
-
-      drawShearLine(ctx, g);
-
-      // tension wrench in the keyway
-      drawWrench(ctx, g, angle);
-
-      // pick tool
-      if (picking) {
-        const idx = nearestPin(pickX);
-        if (idx >= 0) {
-          const cx = g.chamberX(idx);
-          ctx.strokeStyle = "#7c848d"; ctx.lineWidth = 3; ctx.lineCap = "round";
-          ctx.beginPath();
-          ctx.moveTo(cx, g.bodyBot + 26);
-          ctx.lineTo(cx, clamp(pickY, g.keywayY - pins[idx].lift, g.bodyBot + 26));
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(cx, clamp(pickY, g.keywayY - pins[idx].lift, g.bodyBot + 26), 3, 0, Math.PI * 2);
-          ctx.fillStyle = "#7c848d"; ctx.fill();
-        }
-      }
-
-      // status
-      if (opened) {
-        stSpp.textContent = "open ✓ · all five set";
-        stSpp.className = "status open";
-      } else if (!ckTension.checked) {
-        stSpp.textContent = "turn on tension to begin";
-        stSpp.className = "status";
-      } else if (overset) {
-        stSpp.textContent = "overset, ease off pin " + (bind + 1);
-        stSpp.className = "status bind";
-      } else if (bind >= 0) {
-        stSpp.textContent = "pin " + (bind + 1) + " binding · " + setCount() + "/5 set";
-        stSpp.className = "status bind";
-      }
-    }
-
-    function drawWrench(ctx, g, angle) {
-      if (!ckTension.checked) return;
-      ctx.save();
-      ctx.translate(g.cx, g.keywayY); ctx.rotate(angle); ctx.translate(-g.cx, -g.keywayY);
-      ctx.strokeStyle = "#586069"; ctx.lineWidth = 5; ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(g.bodyX + 14, g.keywayY + 6);
-      ctx.lineTo(g.bodyX - 46, g.keywayY + 6);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    let raf;
-    function loop() { update(); draw(); raf = requestAnimationFrame(loop); }
-    btReset.addEventListener("click", () => { ckTension.checked = false; init(); });
-    ckTension.addEventListener("change", () => { Sound.ensure(); });
-    const ckSound = document.getElementById("ck-sound");
-    ckSound.addEventListener("change", () => { Sound.enabled = ckSound.checked; Sound.ensure(); });
-    loop();
-  })();
-
-  // ============================================================
-  // FIGURE 5: RAKING
-  // ============================================================
-  (function () {
-    const canvas = document.getElementById("cv-rake");
-    const stRake = document.getElementById("st-rake");
-    const btReset = document.getElementById("bt-rake-reset");
-    const H = 320;
-    let view = hidpi(canvas, H);
-    let g = lockGeo(view.w, H);
-
-    let pins, angle, rakeX, lastRakeX, opened, dragging, vel;
-
-    function init() {
-      pins = [];
-      for (let i = 0; i < NPINS; i++) pins.push({ bitting: [0.78,0.34,0.62,0.2,0.5][i], lift: 0, set: false, jitter: 0 });
-      angle = 0; rakeX = g.bodyX + 30; lastRakeX = rakeX; opened = false; dragging = false; vel = 0;
-    }
-    init();
-
-    function resize() { view = hidpi(canvas, H); g = lockGeo(view.w, H); }
-    window.addEventListener("resize", resize);
-
-    function maxLift() { return (g.keywayY - g.shearY) * 0.62; }
-    function requiredLift(i) { return pins[i].bitting * maxLift(); }
-    function setCount() { return pins.reduce((a, p) => a + (p.set ? 1 : 0), 0); }
-
-    function pt(e) {
-      const r = canvas.getBoundingClientRect();
-      return (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
-    }
-    function down(e) { e.preventDefault(); Sound.ensure(); dragging = true; lastRakeX = rakeX = pt(e); }
-    function move(e) { if (!dragging) return; e.preventDefault(); rakeX = pt(e); }
-    function upE() { dragging = false; }
-
-    canvas.addEventListener("mousedown", down);
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", upE);
-    canvas.addEventListener("touchstart", down, { passive: false });
-    canvas.addEventListener("touchmove", move, { passive: false });
-    window.addEventListener("touchend", upE);
-
-    function update() {
-      vel = rakeX - lastRakeX;
-      const speed = Math.abs(vel);
-      lastRakeX = rakeX;
-      rakeX = clamp(rakeX, g.bodyX + 10, g.bodyX + g.bodyW - 10);
-
-      // bounce pins near the rake when it's moving
-      for (let i = 0; i < NPINS; i++) {
-        if (pins[i].set) { pins[i].lift = lerp(pins[i].lift, requiredLift(i), 0.4); continue; }
-        const near = Math.abs(rakeX - g.chamberX(i)) < g.gap * 0.7;
-        if (near && speed > 1.5) {
-          pins[i].jitter = clamp(pins[i].jitter + speed * 0.12, 0, maxLift() + 30);
-          if (rnd() < 0.04) Sound.tick();
-        }
-        pins[i].jitter = lerp(pins[i].jitter, 0, 0.18);
-        pins[i].lift = pins[i].jitter;
-        // chance to set if it passes through the shear-line window while scrubbing
-        const req = requiredLift(i);
-        if (speed > 1.5 && pins[i].lift > req - 6 && pins[i].lift < req + 14) {
-          // luck-based set, biased so it eventually opens
-          if (rnd() < 0.06) { pins[i].set = true; pins[i].lift = req; Sound.click(); }
-        }
-      }
-      if (setCount() === NPINS && !opened) { opened = true; Sound.open(); }
-      const target = opened ? 0.5 : 0.012 + setCount() * 0.016;
-      angle = lerp(angle, target, opened ? 0.12 : 0.25);
-    }
-
-    function draw() {
-      const ctx = view.ctx, w = view.w;
-      ctx.clearRect(0, 0, w, H);
-      drawShell(ctx, g, angle);
-      const pivotX = g.cx, pivotY = g.keywayY;
-      const ledgeW = Math.min(g.pinW * 0.5, angle / 0.03 * g.pinW * 0.5);
-
-      for (let i = 0; i < NPINS; i++) {
-        const cx = g.chamberX(i);
-        const keyBot = g.keywayY - pins[i].lift;
-        const keyLen = (g.keywayY - g.shearY) + 6;
-        const keyTop = keyBot - keyLen;
-        const driverLen = (g.shearY - g.chamberTop) * 0.6;
-        let driverBot = pins[i].set ? g.shearY - 1 : keyTop;
-        const driverTop = driverBot - driverLen;
-
-        ctx.fillStyle = "#f6f8fa";
-        ctx.fillRect(cx - g.pinW / 2 - 2, g.chamberTop, g.pinW + 4, g.shearY - g.chamberTop);
-        drawSpring(ctx, cx, g.chamberTop, driverTop, g.pinW);
-        if (pins[i].set && ledgeW > 0.5) { ctx.fillStyle = PAL.ledge; ctx.fillRect(cx - g.pinW / 2, g.shearY - 2, ledgeW, 4); }
-        if (pins[i].set) { ctx.shadowColor = PAL.setGlow; ctx.shadowBlur = 10; }
-        drawPin(ctx, cx, driverTop, driverBot, g.pinW, PAL.driver, PAL.driverEdge, false);
-        ctx.shadowBlur = 0;
-        ctx.save();
-        ctx.translate(pivotX, pivotY); ctx.rotate(angle); ctx.translate(-pivotX, -pivotY);
-        drawPin(ctx, cx, keyTop, keyBot, g.pinW, PAL.keyPin, PAL.keyPinEdge, true);
-        ctx.restore();
-      }
-      drawShearLine(ctx, g);
-
-      // rake tool (zigzag) sitting in the keyway
-      ctx.save();
-      ctx.translate(g.cx, g.keywayY); ctx.rotate(angle); ctx.translate(-g.cx, -g.keywayY);
-      ctx.strokeStyle = "#586069"; ctx.lineWidth = 3; ctx.lineJoin = "round"; ctx.lineCap = "round";
-      const ry = g.keywayY + 8;
-      ctx.beginPath();
-      ctx.moveTo(g.bodyX - 40, ry);
-      ctx.lineTo(rakeX - 26, ry);
-      for (let k = 0; k < 5; k++) {
-        ctx.lineTo(rakeX - 26 + k * 13 + 6, ry - 8);
-        ctx.lineTo(rakeX - 26 + k * 13 + 13, ry);
-      }
-      ctx.stroke();
-      // handle dot
-      ctx.fillStyle = "#586069";
-      ctx.beginPath(); ctx.arc(g.bodyX - 40, ry, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
-
-      if (opened) { stRake.textContent = "open ✓ · got lucky"; stRake.className = "status open"; }
-      else { stRake.textContent = setCount() + "/5 set · keep scrubbing"; stRake.className = "status " + (setCount() ? "bind" : ""); }
-    }
-
-    let raf;
-    function loop() { update(); draw(); raf = requestAnimationFrame(loop); }
-    btReset.addEventListener("click", init);
-    loop();
-  })();
-
+  loop();
 })();
 </script>
 </body>
