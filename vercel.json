@@ -1,17 +1,25 @@
 {
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "interactive-blogs.viraat.dev" }],
+      "destination": "/interactive-blogs",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "bigthots.viraat.dev" }],
       "destination": "/big-thots.html"
     },
+    { "source": "/picking-locks", "destination": "/picking-locks.html" },
+    { "source": "/noise-canceling", "destination": "/noise-canceling.html" },
+    { "source": "/black-hole", "destination": "/black-hole.html" },
+    { "source": "/interactive-blogs", "destination": "/interactive-blogs.html" },
     { "source": "/", "destination": "/index.html" },
     { "source": "/about", "destination": "/index.html" },
     { "source": "/work", "destination": "/work.html" },
-    { "source": "/big-thots", "destination": "/big-thots.html" },
-    { "source": "/picking-locks", "destination": "/picking-locks.html" },
-    { "source": "/noise-canceling", "destination": "/noise-canceling.html" },
-    { "source": "/black-hole", "destination": "/black-hole.html" }
+    { "source": "/big-thots", "destination": "/big-thots.html" }
   ]
 }
-

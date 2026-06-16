@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Blogs · Viraat Das</title>
+<meta name="description" content="Interactive, hands-on explainers by Viraat Das. Each one is a live model you can poke at.">
+
+<link rel="icon" type="image/jpeg" href="/assets/personal-website-pic.jpeg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://interactive-blogs.viraat.dev/">
+<meta property="og:title" content="Interactive Blogs · Viraat Das">
+<meta property="og:description" content="Interactive, hands-on explainers. Each one is a live model you can poke at.">
+<meta property="og:image" content="https://viraat.dev/assets/personal-website-pic.jpeg">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:title" content="Interactive Blogs · Viraat Das">
+<meta property="twitter:description" content="Interactive, hands-on explainers. Each one is a live model you can poke at.">
+<meta property="twitter:image" content="https://viraat.dev/assets/personal-website-pic.jpeg">
+
+<style>
+  :root { --ink: #161719; --ink-strong: #050608; --muted: #565d64; --link: #2a6fb5; --rule: #e6e8eb; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink); background: #fff; font-size: 18px; line-height: 1.7;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 22px 8rem; }
+  .topnav { max-width: 680px; margin: 0 auto; padding: 1.6rem 22px 0; font-size: 14px; }
+  .topnav a { color: var(--muted); text-decoration: none; }
+  .topnav a:hover { color: var(--ink); }
+  header.page { padding: 3.2rem 0 0.6rem; }
+  header.page h1 { font-size: 40px; line-height: 1.12; letter-spacing: -0.02em; color: var(--ink-strong); font-weight: 700; }
+  header.page p { margin-top: 1rem; color: var(--muted); font-size: 18px; max-width: 30em; }
+  .list { margin-top: 2.6rem; display: flex; flex-direction: column; gap: 1rem; }
+  .card {
+    display: block; text-decoration: none; color: inherit;
+    border: 1px solid var(--rule); border-radius: 14px; padding: 1.3rem 1.4rem;
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    background: #fff;
+  }
+  .card:hover { border-color: #c9d4e2; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(20,30,50,0.08); }
+  .card .row { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+  .card h2 { font-size: 21px; font-weight: 650; letter-spacing: -0.01em; color: var(--ink-strong); }
+  .card .tag { font-size: 12px; color: #7a818a; border: 1px solid var(--rule); border-radius: 999px; padding: 0.1rem 0.55rem; }
+  .card p { margin-top: 0.5rem; color: var(--muted); font-size: 15.5px; line-height: 1.55; }
+  .card .go { margin-top: 0.7rem; font-size: 14px; color: var(--link); font-weight: 600; }
+  footer.page { margin-top: 3rem; color: var(--muted); font-size: 14.5px; }
+  footer.page a { color: var(--link); text-decoration: none; }
+  footer.page a:hover { text-decoration: underline; }
+  @media (max-width: 560px) { body { font-size: 17px; } header.page h1 { font-size: 31px; } }
+</style>
+</head>
+<body>
+  <nav class="topnav"><a href="https://viraat.dev/">← viraat.dev</a></nav>
+
+  <div class="wrap">
+    <header class="page">
+      <h1>Interactive Blogs</h1>
+      <p>Hands-on explainers, in the spirit of <a href="https://ciechanow.ski/" target="_blank" rel="noopener" style="color:var(--link);text-decoration:none">Bartosz Ciechanowski</a>. None of these are videos. Every figure is a live model you can drag, spin, and poke at. Some of them make noise.</p>
+    </header>
+
+    <div class="list">
+      <a class="card" href="/picking-locks">
+        <div class="row"><h2>Picking Locks</h2><span class="tag">3D · sound</span></div>
+        <p>How the most common lock in the world works, and how it's picked. Spin a real 3D cutaway, slide the key in, and pick it open pin by pin while it clicks.</p>
+        <div class="go">Open →</div>
+      </a>
+
+      <a class="card" href="/noise-canceling">
+        <div class="row"><h2>Noise Canceling</h2><span class="tag">audio</span></div>
+        <p>How headphones erase sound with more sound. The figures actually play audio, so you can hear two waves cancel into silence.</p>
+        <div class="go">Open →</div>
+      </a>
+
+      <a class="card" href="/black-hole">
+        <div class="row"><h2>Into a Black Hole</h2><span class="tag">3D</span></div>
+        <p>What happens to light as it falls in. Real Schwarzschild geodesics, the photon sphere, the event horizon, and gravitational lensing you can orbit around.</p>
+        <div class="go">Open →</div>
+      </a>
+    </div>
+
+    <footer class="page">
+      <p>By <a href="https://viraat.dev/">Viraat Das</a>. More on the way.</p>
+    </footer>
+  </div>
+</body>
+</html>
