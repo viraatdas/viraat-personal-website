@@ -134,17 +134,17 @@
 
     <p>With the first pin set, the plug has turned a hair more, which makes the <em>next</em> least-aligned pin bind. You find it, set it, the plug creeps further. Set all five and the whole thing swings open.</p>
 
-    <p class="note">Turn on tension, then click the <strong>glowing</strong> binding pin to push it to the shear line. Pick the wrong one and nothing happens, so feel for the binding pin. Spin the lock while you work, and turn your sound on to hear each pin click home.</p>
+    <p class="note">Turn on tension, then drag the <strong>glowing</strong> binding pin straight up to the shear line. Push the wrong one and nothing catches, so feel for the binding pin. Drag empty space to spin the lock, and turn your sound on to hear each pin click home.</p>
 
     <figure>
-      <div class="fig-canvas-wrap"><canvas id="cv-spp"></canvas><div class="hint">drag to rotate · click pins</div></div>
+      <div class="fig-canvas-wrap"><canvas id="cv-spp"></canvas><div class="hint">drag a pin up · drag empty space to rotate</div></div>
       <div class="controls">
         <label class="switch"><input type="checkbox" id="ck-tension"> apply tension</label>
         <span class="status" id="st-spp">turn on tension to begin</span>
         <button class="btn" id="bt-spp-reset">reset lock</button>
         <label class="switch"><input type="checkbox" id="ck-sound" checked> sound</label>
       </div>
-      <figcaption>The binding pin glows. Click it to set it on the ledge, and watch the plug creep around with every pin you set. This is exactly the sequence a picker feels in the dark, by touch alone.</figcaption>
+      <figcaption>The binding pin glows. Drag it up to the shear line to set it on the ledge, and watch the plug creep around with every pin you set. This is exactly the sequence a picker feels in the dark, by touch alone.</figcaption>
     </figure>
 
     <h2>Raking, the lazy way</h2>
@@ -506,14 +506,27 @@ function setCutaway(lock, on) {
   setCutaway(lock, true);
   lock.key.visible = false;   // no key in picking; you use a pick
 
-  let order, setFlags, lifts, anim, angle, opened;
+  // fat invisible grab proxies so each pin column is easy to grab and drag
+  const proxies = [];
+  for (let i = 0; i < N; i++) {
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 2.8, 10),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+    p.position.set(XS[i], 0.3, 0);
+    lock.plugGroup.add(p);
+    proxies.push(p);
+  }
+  // emissive color objects for highlighting (clone so we don't tint every lock)
+  lock.driverPins.forEach(d => { d.mesh.material = d.mesh.material.clone(); d.mesh.material.emissive = new THREE.Color(0x000000); });
+  lock.keyPins.forEach(k => { k.body.material = k.body.material.clone(); k.body.material.emissive = new THREE.Color(0x000000); });
+
+  let order, setFlags, lifts, manual, active, angle, opened;
   function init() {
     const tol = []; for (let i = 0; i < N; i++) tol.push([i, Math.random()]);
     tol.sort((a, b) => b[1] - a[1]); order = tol.map(t => t[0]);
     setFlags = [false, false, false, false, false];
     lifts = [0, 0, 0, 0, 0];
-    anim = [0, 0, 0, 0, 0];   // animated lift target per pin (for the just-picked one)
-    angle = 0; opened = false;
+    manual = [0, 0, 0, 0, 0];
+    active = -1; angle = 0; opened = false;
   }
   init();
 
@@ -524,45 +537,67 @@ function setCutaway(lock, on) {
     return -1;
   }
 
-  // raycasting to click a pin
+  // raycast against the fat proxies
   const ray = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   function pickPin(ev) {
     const r = canvas.getBoundingClientRect();
-    const cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
-    const cy = (ev.touches ? ev.touches[0].clientY : ev.clientY) - r.top;
-    mouse.x = (cx / r.width) * 2 - 1;
-    mouse.y = -(cy / r.height) * 2 + 1;
+    mouse.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
+    mouse.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
     ray.setFromCamera(mouse, fig.camera);
-    const targets = lock.keyPins.map(kp => kp.body);
-    const hits = ray.intersectObjects(targets, false);
-    if (!hits.length) return -1;
-    const m = hits[0].object;
-    return lock.keyPins.findIndex(kp => kp.body === m);
+    const hits = ray.intersectObjects(proxies, false);
+    return hits.length ? proxies.indexOf(hits[0].object) : -1;
   }
 
-  let downPos = null, moved = false;
-  canvas.addEventListener("pointerdown", e => { Sound.ensure(); downPos = [e.clientX, e.clientY]; moved = false; });
-  canvas.addEventListener("pointermove", e => { if (downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) > 6) moved = true; });
-  canvas.addEventListener("pointerup", e => {
-    if (moved) { downPos = null; return; }   // it was a rotate drag
-    downPos = null;
-    if (!ckTension.checked || opened) return;
+  let dragStartY = 0, dragStartLift = 0, dragMoved = false, dudded = false;
+  function trySet(i) {
+    if (setFlags[i] || opened) return false;
+    if (i === binding() && manual[i] >= lock.keyPins[i].bit - 0.03) {
+      setFlags[i] = true; manual[i] = lock.keyPins[i].bit; Sound.click(); return true;
+    }
+    return false;
+  }
+  canvas.addEventListener("pointerdown", e => {
+    Sound.ensure();
+    if (opened) return;
     const idx = pickPin(e);
-    if (idx < 0) return;
-    const b = binding();
-    if (idx === b) {
-      setFlags[idx] = true;
-      Sound.click();
-    } else {
-      anim[idx] = 1; // nudge then fall
-      Sound.dud();
+    if (idx >= 0 && !setFlags[idx]) {
+      active = idx; fig.controls.enabled = false;
+      dragStartY = e.clientY; dragStartLift = lifts[idx]; dragMoved = false; dudded = false;
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
     }
   });
+  canvas.addEventListener("pointermove", e => {
+    if (active < 0) return;
+    e.preventDefault();
+    const dy = dragStartY - e.clientY;
+    if (Math.abs(dy) > 4) dragMoved = true;
+    const maxPush = lock.keyPins[active].bit + 0.22;
+    manual[active] = clamp(dragStartLift + dy * 0.009, 0, maxPush);
+    trySet(active);
+    if (!dudded && !setFlags[active] && active !== binding() && manual[active] > lock.keyPins[active].bit) { Sound.dud(); dudded = true; }
+  });
+  function endDrag(e) {
+    if (active < 0) return;
+    const b = binding();
+    // setting is forgiving: a tap on the binding pin, or any decent upward push, catches it
+    if (active === b && !setFlags[active]) {
+      if (!dragMoved || manual[active] >= lock.keyPins[active].bit * 0.5) {
+        setFlags[active] = true; manual[active] = lock.keyPins[active].bit; Sound.click();
+      }
+    } else if (!dragMoved && b >= 0 && active !== b) {
+      Sound.dud();
+    }
+    active = -1; fig.controls.enabled = true;
+    try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+  }
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
 
   ckTension.addEventListener("change", () => Sound.ensure());
   ckSound.addEventListener("change", () => { Sound.enabled = ckSound.checked; Sound.ensure(); });
-  btReset.addEventListener("click", () => { ckTension.checked = false; init(); });
+  btReset.addEventListener("click", () => { ckTension.checked = false; fig.controls.enabled = true; init(); });
 
   function update() {
     const b = binding();
@@ -574,17 +609,15 @@ function setCutaway(lock, on) {
 
     for (let i = 0; i < N; i++) {
       let target;
-      if (setFlags[i]) target = lock.keyPins[i].bit;        // sits at shear
-      else if (anim[i] > 0.01) { target = lock.keyPins[i].bit * 0.85; anim[i] *= 0.86; } // nudge, then relax
-      else target = 0;
-      lifts[i] += (target - lifts[i]) * 0.25;
+      if (setFlags[i]) target = lock.keyPins[i].bit;          // sits on the ledge
+      else if (active === i) target = manual[i];              // being pushed
+      else { target = 0; manual[i] = 0; }                    // springs back
+      lifts[i] += (target - lifts[i]) * (active === i ? 0.55 : 0.28);
 
-      // glow the binding pin
       const isBind = (i === b);
       const km = lock.keyPins[i].body.material;
       const dm = lock.driverPins[i].mesh.material;
-      km.emissive = km.emissive || new THREE.Color();
-      if (isBind) { km.emissive.setHex(0xe0772f); km.emissiveIntensity = 0.55; }
+      if (isBind) { km.emissive.setHex(0xe0772f); km.emissiveIntensity = 0.6; }
       else { km.emissiveIntensity = 0; }
       if (setFlags[i]) { dm.emissive.setHex(0x2f9e63); dm.emissiveIntensity = 0.4; }
       else { dm.emissiveIntensity = 0; }
@@ -595,10 +628,6 @@ function setCutaway(lock, on) {
     else if (!ckTension.checked) { stSpp.textContent = "turn on tension to begin"; stSpp.className = "status"; }
     else if (b >= 0) { stSpp.textContent = "pin " + (b + 1) + " binding · " + sc + "/5 set"; stSpp.className = "status bind"; }
   }
-
-  // ensure driver materials have emissive color object
-  lock.driverPins.forEach(d => { d.mesh.material.emissive = new THREE.Color(0x000000); });
-  lock.keyPins.forEach(k => { k.body.material = k.body.material.clone(); k.body.material.emissive = new THREE.Color(0x000000); });
 
   function loop() {
     update(); fig.controls.update();
