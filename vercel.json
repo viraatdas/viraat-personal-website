@@ -8,7 +8,10 @@
     { "source": "/", "destination": "/index.html" },
     { "source": "/about", "destination": "/index.html" },
     { "source": "/work", "destination": "/work.html" },
-    { "source": "/big-thots", "destination": "/big-thots.html" }
+    { "source": "/big-thots", "destination": "/big-thots.html" },
+    { "source": "/picking-locks", "destination": "/picking-locks.html" },
+    { "source": "/noise-canceling", "destination": "/noise-canceling.html" },
+    { "source": "/black-hole", "destination": "/black-hole.html" }
   ]
 }
 

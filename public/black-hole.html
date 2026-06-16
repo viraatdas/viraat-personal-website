@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Into a Black Hole</title>
+<meta name="description" content="An interactive look at what happens to light as it falls toward a black hole: bending, the photon sphere, the event horizon, and lensing.">
+
+<link rel="icon" type="image/jpeg" href="/assets/personal-website-pic.jpeg">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://viraat.dev/black-hole">
+<meta property="og:title" content="Into a Black Hole">
+<meta property="og:description" content="An interactive look at what happens to light as it falls toward a black hole.">
+<meta property="og:image" content="https://viraat.dev/assets/personal-website-pic.jpeg">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:title" content="Into a Black Hole">
+<meta property="twitter:description" content="An interactive look at what happens to light as it falls toward a black hole.">
+<meta property="twitter:image" content="https://viraat.dev/assets/personal-website-pic.jpeg">
+
+<style>
+  :root {
+    --ink: #161719;
+    --ink-strong: #050608;
+    --muted: #565d64;
+    --link: #2a6fb5;
+    --rule: #e6e8eb;
+    --fig-border: #1b2230;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink); background: #fff;
+    font-size: 18px; line-height: 1.7;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 22px 8rem; }
+  .topnav { max-width: 680px; margin: 0 auto; padding: 1.6rem 22px 0; font-size: 14px; }
+  .topnav a { color: var(--muted); text-decoration: none; }
+  .topnav a:hover { color: var(--ink); }
+  header.post { padding: 3.2rem 0 1.2rem; }
+  header.post h1 { font-size: 40px; line-height: 1.15; letter-spacing: -0.02em; color: var(--ink-strong); font-weight: 700; }
+  header.post .meta { margin-top: 0.9rem; color: var(--muted); font-size: 15px; }
+  p { margin: 1.25rem 0; }
+  h2 { margin: 3.2rem 0 0.4rem; font-size: 26px; line-height: 1.25; letter-spacing: -0.01em; color: var(--ink-strong); font-weight: 700; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  em { font-style: italic; }
+  strong { font-weight: 650; }
+  .lead { font-size: 19px; }
+  .note { font-size: 15px; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 1rem; margin: 1.6rem 0; }
+  figure { margin: 2.4rem 0; }
+  .fig-canvas-wrap { background: #06080d; border: 1px solid var(--fig-border); border-radius: 10px; overflow: hidden; }
+  canvas { display: block; width: 100%; touch-action: none; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1.4rem; padding: 0.95rem 1.05rem; border: 1px solid var(--fig-border); border-top: none; border-radius: 0 0 10px 10px; background: #0b0e15; font-size: 14px; color: #c9cfd8; margin-top: -10px; padding-top: 1.05rem; }
+  .ctrl { display: flex; align-items: center; gap: 0.55rem; white-space: nowrap; }
+  .ctrl label { color: #8b93a0; }
+  input[type="range"] { -webkit-appearance: none; appearance: none; height: 4px; width: 140px; background: #2a3242; border-radius: 999px; outline: none; cursor: pointer; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 17px; height: 17px; border-radius: 50%; background: #e9edf2; border: 1px solid #aab2c0; box-shadow: 0 1px 2px rgba(0,0,0,0.4); cursor: pointer; }
+  input[type="range"]::-moz-range-thumb { width: 17px; height: 17px; border-radius: 50%; background: #e9edf2; border: 1px solid #aab2c0; cursor: pointer; }
+  .btn { font: inherit; font-size: 13.5px; padding: 0.34rem 0.85rem; border: 1px solid #313a4b; border-radius: 7px; background: #161b26; color: #d6dbe3; cursor: pointer; }
+  .btn:hover { background: #1d2330; }
+  .switch { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; user-select: none; color: #c9cfd8; }
+  .switch input { accent-color: #c79a3a; width: 15px; height: 15px; }
+  .status { font-size: 13.5px; color: #8b93a0; }
+  .status.cap { color: #e0772f; }
+  .status.esc { color: #57b8e0; }
+  .status.orbit { color: #d9b94a; }
+  figcaption { font-size: 14.5px; color: var(--muted); margin-top: 0.85rem; line-height: 1.6; }
+  hr.end { border: none; border-top: 1px solid var(--rule); margin: 3.5rem 0 1.6rem; }
+  footer.post { color: var(--muted); font-size: 14.5px; }
+  footer.post a { color: var(--link); }
+  @media (max-width: 560px) {
+    body { font-size: 17px; }
+    header.post h1 { font-size: 31px; }
+    h2 { font-size: 23px; }
+    input[type="range"] { width: 116px; }
+    .controls { gap: 0.6rem 1rem; }
+  }
+</style>
+</head>
+<body>
+  <nav class="topnav"><a href="/">← viraat.dev</a></nav>
+
+  <div class="wrap">
+    <header class="post">
+      <h1>Into a Black Hole</h1>
+      <div class="meta">An interactive explainer · drag the rays, follow the light in</div>
+    </header>
+
+    <p class="lead">A black hole is the one object in the universe that light cannot leave. We always talk about it in terms of what falls in, but the clearest way to understand one is to follow a single ray of light as it approaches, and watch the moment it runs out of options. Everything below is a live model. Drag the light around and see for yourself.</p>
+
+    <h2>Gravity bends light</h2>
+
+    <p>Light travels in straight lines, until it does not. Mass curves the space around it, and light simply follows that curve. Near anything heavy, a passing ray gets nudged off course. Near a black hole, where the curving becomes extreme, that nudge turns into a hairpin, a loop, or a one-way trip.</p>
+
+    <p>Below is a black hole seen from the side. The black disk is the <strong>event horizon</strong>, the point of no return. Grab the incoming ray on the right and slide it up and down to aim it closer or farther from the center.</p>
+
+    <figure>
+      <div class="fig-canvas-wrap"><canvas id="cv-bend"></canvas></div>
+      <div class="controls">
+        <div class="ctrl"><label>aim the ray</label><span class="status" id="st-bend">drag the dot on the right</span></div>
+        <label class="switch"><input type="checkbox" id="ck-rays" checked> show other rays</label>
+        <label class="switch"><input type="checkbox" id="ck-sound-bh" checked> sound</label>
+      </div>
+      <figcaption>Aim wide and the ray barely bends. Aim closer and the bend grows. There is a knife-edge aim where the ray neither escapes nor falls in: it loops. That radius is the photon sphere.</figcaption>
+    </figure>
+
+    <h2>The photon sphere</h2>
+
+    <p>At one exact distance, one and a half times the radius of the horizon, gravity bends light by just the right amount for it to travel in a circle. A ray arriving at this radius, aimed perfectly, will orbit the black hole. This shell is the <strong>photon sphere</strong>, drawn as the dashed ring above.</p>
+
+    <p>It is a desperately unstable place. Nudge a photon a hair inward and it spirals down through the horizon. Nudge it a hair outward and it slowly winds away to freedom. Real light does not sit here. But light grazing this radius can loop the black hole once, twice, or many times before leaving, which is why a black hole is wrapped in faint repeated images of everything around it.</p>
+
+    <h2>Why nothing climbs back out</h2>
+
+    <p>Here is the strange part. Crossing the horizon is not like hitting a wall. Locally, nothing special happens there. What changes is the geometry of the future itself.</p>
+
+    <p>Every event has a <strong>light cone</strong>, the set of directions light can go from it, and nothing can travel outside its own cone. Far from the black hole the cone points evenly up toward the future, and you are free to move outward or inward. As you get closer, gravity tips the cone over, toward the hole. At the horizon the cone has tipped so far that even its outermost edge, the path of an outgoing light ray, points straight along the horizon instead of away from it. Inside, the entire cone points inward. Every possible future leads to the center. Drag the observer in and watch it happen.</p>
+
+    <figure>
+      <div class="fig-canvas-wrap"><canvas id="cv-cones"></canvas></div>
+      <div class="controls">
+        <div class="ctrl"><label for="sl-r">observer distance</label><input type="range" id="sl-r" min="0.45" max="4" step="0.001" value="3"></div>
+        <span class="status" id="st-cones">far outside</span>
+      </div>
+      <figcaption>Time runs upward, distance from the hole runs sideways. Each wedge is a light cone. Far away it opens upward and outward travel is easy. At the horizon the outgoing edge stands straight up. Past it, the whole cone leans into the hole, so every future heads inward.</figcaption>
+    </figure>
+
+    <h2>What you would actually see</h2>
+
+    <p>Because the black hole bends every ray that passes near it, the sky behind it gets smeared into rings. Light from a single star can reach your eye by going over the top, under the bottom, or curling most of the way around, so you see that one star repeated, stretched into arcs. The dark disk you see is not the horizon itself but its <em>shadow</em>, magnified by all that bending to look larger than it really is, ringed by a thin bright line of light that orbited and escaped.</p>
+
+    <p>Drag the field of stars behind the hole and watch them warp as they pass.</p>
+
+    <figure>
+      <div class="fig-canvas-wrap"><canvas id="cv-lens"></canvas></div>
+      <div class="controls">
+        <span class="status" id="st-lens">drag the background around</span>
+        <button class="btn" id="bt-lens-grid">grid / stars</button>
+      </div>
+      <figcaption>The straight grid behind the hole gets pulled into curves, and a bright ring forms at the edge of the shadow. This is gravitational lensing, the same effect astronomers use to weigh galaxies and find black holes they cannot see directly.</figcaption>
+    </figure>
+
+    <h2>The trip in</h2>
+
+    <p>So follow the light all the way down. Far out, it cruises in nearly straight, bending a little more with every step. Near the photon sphere it can whirl around the hole, painting those ghost rings. And if it is aimed even slightly too close, the bending wins, its light cone tips fully inward, and it crosses the horizon, where the only remaining direction is down. From outside we never see it arrive. The light just dims, reddens, and fades, frozen forever at the edge.</p>
+
+    <p>None of this needs exotic math to picture. It is all one idea: mass curves space, light follows the curve, and a black hole curves it so hard that some paths only point one way.</p>
+
+    <hr class="end">
+    <footer class="post">
+      <p>Written by <a href="/">Viraat Das</a>. The light paths are real Schwarzschild geodesics, integrated live in your browser. Built in the spirit of <a href="https://ciechanow.ski/" target="_blank" rel="noopener">Bartosz Ciechanowski</a>, alongside <a href="/picking-locks">Picking Locks</a> and <a href="/noise-canceling">Noise Canceling</a>.</p>
+    </footer>
+  </div>
+
+<script>
+"use strict";
+(function () {
+  // ---------- helpers ----------
+  function hidpi(canvas, cssH) {
+    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    const cssW = canvas.clientWidth || canvas.parentElement.clientWidth;
+    canvas.style.height = cssH + "px";
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w: cssW, h: cssH };
+  }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  const TAU = Math.PI * 2;
+
+  // ---------- subtle audio (capture tone) ----------
+  const Sound = (function () {
+    let ctx = null; const api = { enabled: true };
+    function ensure() {
+      if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; try { ctx = new AC(); } catch (e) { return null; } }
+      if (ctx.state === "suspended") ctx.resume(); return ctx;
+    }
+    api.ensure = ensure;
+    api.capture = function () {
+      if (!api.enabled) return; const c = ensure(); if (!c) return;
+      const t = c.currentTime;
+      const o = c.createOscillator(); o.type = "sine";
+      o.frequency.setValueAtTime(320, t);
+      o.frequency.exponentialRampToValueAtTime(48, t + 0.9);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.22, t + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.0);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 1.05);
+    };
+    api.escape = function () {
+      if (!api.enabled) return; const c = ensure(); if (!c) return;
+      const t = c.currentTime;
+      const o = c.createOscillator(); o.type = "triangle";
+      o.frequency.setValueAtTime(420, t);
+      o.frequency.exponentialRampToValueAtTime(900, t + 0.18);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.07, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.25);
+    };
+    return api;
+  })();
+
+  // small starfield generator (fixed, no per-frame randomness)
+  function makeStars(n, w, h, seed) {
+    let s = seed || 12345;
+    function r() { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }
+    const arr = [];
+    for (let i = 0; i < n; i++) arr.push({ x: r() * w, y: r() * h, b: 0.3 + r() * 0.7, s: r() < 0.08 ? 1.6 : 0.9 });
+    return arr;
+  }
+
+  // ============================================================
+  // FIGURE 1: light bending / capture (real geodesics)
+  // ============================================================
+  (function () {
+    const canvas = document.getElementById("cv-bend");
+    const stBend = document.getElementById("st-bend");
+    const ckRays = document.getElementById("ck-rays");
+    const ckSound = document.getElementById("ck-sound-bh");
+    const H = 420;
+    let view = hidpi(canvas, H);
+    const RS_PX = 34; // pixels per Schwarzschild radius
+    const B_CRIT = 3 * Math.sqrt(3) / 2; // ~2.598
+    let stars = makeStars(110, view.w, H, 7);
+
+    let b = 3.2;            // impact parameter of the draggable ray (r_s units, signed)
+    let path = null, captured = false;
+    let dragging = false;
+    let dotT = 0;           // animation progress along path
+    let lastResult = "";
+
+    function cx() { return view.w * 0.5; }
+    function cy() { return H * 0.5; }
+
+    function resize() { view = hidpi(canvas, H); stars = makeStars(110, view.w, H, 7); recompute(); }
+    window.addEventListener("resize", resize);
+
+    // integrate photon path in Schwarzschild geometry (r_s = 1)
+    // d^2u/dphi^2 = -u + 1.5 u^2,  u = 1/r
+    function photonPath(bb) {
+      const sgn = bb < 0 ? -1 : 1;
+      let B = Math.abs(bb); if (B < 0.05) B = 0.05;
+      const pts = [];
+      const r0 = 60;
+      let phi = Math.asin(clamp(B / r0, -1, 1));
+      let u = 1 / r0;
+      let w = Math.cos(phi) / B; // du/dphi from incoming asymptote y = B
+      const dphi = 0.012;
+      let steps = 0;
+      const f = (U, W) => [W, -U + 1.5 * U * U];
+      while (steps < 9000) {
+        const r = 1 / u;
+        pts.push([r * Math.cos(phi), sgn * r * Math.sin(phi)]);
+        if (r <= 1.0) return { pts, captured: true };
+        if (u <= 0 || (r > r0 && steps > 30)) return { pts, captured: false };
+        const k1 = f(u, w);
+        const k2 = f(u + 0.5 * dphi * k1[0], w + 0.5 * dphi * k1[1]);
+        const k3 = f(u + 0.5 * dphi * k2[0], w + 0.5 * dphi * k2[1]);
+        const k4 = f(u + dphi * k3[0], w + dphi * k3[1]);
+        u += dphi / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]);
+        w += dphi / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
+        phi += dphi; steps++;
+      }
+      return { pts, captured: false };
+    }
+
+    function recompute() {
+      const res = photonPath(b);
+      path = res.pts; captured = res.captured; dotT = 0;
+      const near = Math.abs(Math.abs(b) - B_CRIT);
+      let result;
+      if (captured) result = "captured";
+      else if (near < 0.18) result = "orbiting";
+      else result = "escaped";
+      if (result !== lastResult) {
+        if (result === "captured") Sound.capture();
+        else if (result === "escaped" && lastResult) Sound.escape();
+      }
+      lastResult = result;
+      if (captured) { stBend.textContent = "captured · falls in"; stBend.className = "status cap"; }
+      else if (near < 0.18) { stBend.textContent = "grazing the photon sphere"; stBend.className = "status orbit"; }
+      else { stBend.textContent = "deflected · escapes"; stBend.className = "status esc"; }
+    }
+
+    function toScreen(p) { return [cx() + p[0] * RS_PX, cy() - p[1] * RS_PX]; }
+
+    function pointer(e) {
+      const rct = canvas.getBoundingClientRect();
+      const px = (e.touches ? e.touches[0].clientX : e.clientX) - rct.left;
+      const py = (e.touches ? e.touches[0].clientY : e.clientY) - rct.top;
+      return [px, py];
+    }
+    function down(e) {
+      e.preventDefault(); Sound.ensure(); dragging = true; move(e);
+    }
+    function move(e) {
+      if (!dragging) return; e.preventDefault();
+      const [, py] = pointer(e);
+      b = clamp((cy() - py) / RS_PX, -6.2, 6.2);
+      recompute();
+    }
+    function up() { dragging = false; }
+    canvas.addEventListener("mousedown", down);
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+    canvas.addEventListener("touchstart", down, { passive: false });
+    canvas.addEventListener("touchmove", move, { passive: false });
+    window.addEventListener("touchend", up);
+    ckSound.addEventListener("change", () => { Sound.enabled = ckSound.checked; Sound.ensure(); });
+
+    function drawPathCurve(pts, color, lw, alpha) {
+      ctx0.beginPath();
+      for (let i = 0; i < pts.length; i++) {
+        const s = toScreen(pts[i]);
+        if (i === 0) ctx0.moveTo(s[0], s[1]); else ctx0.lineTo(s[0], s[1]);
+      }
+      ctx0.strokeStyle = color; ctx0.globalAlpha = alpha == null ? 1 : alpha;
+      ctx0.lineWidth = lw; ctx0.lineJoin = "round"; ctx0.stroke();
+      ctx0.globalAlpha = 1;
+    }
+
+    let ctx0;
+    function draw(ts) {
+      ctx0 = view.ctx; const w = view.w;
+      ctx0.clearRect(0, 0, w, H);
+      // starfield
+      for (const st of stars) {
+        ctx0.fillStyle = "rgba(200,212,230," + st.b * 0.5 + ")";
+        ctx0.beginPath(); ctx0.arc(st.x, st.y, st.s, 0, TAU); ctx0.fill();
+      }
+      // photon sphere (dashed)
+      ctx0.save();
+      ctx0.setLineDash([5, 5]);
+      ctx0.strokeStyle = "rgba(217,185,74,0.55)"; ctx0.lineWidth = 1.2;
+      ctx0.beginPath(); ctx0.arc(cx(), cy(), 1.5 * RS_PX, 0, TAU); ctx0.stroke();
+      ctx0.restore();
+      // accretion glow ring just outside horizon
+      const glow = ctx0.createRadialGradient(cx(), cy(), RS_PX * 0.9, cx(), cy(), RS_PX * 1.7);
+      glow.addColorStop(0, "rgba(255,170,70,0.0)");
+      glow.addColorStop(0.5, "rgba(255,150,60,0.18)");
+      glow.addColorStop(1, "rgba(255,150,60,0.0)");
+      ctx0.fillStyle = glow;
+      ctx0.beginPath(); ctx0.arc(cx(), cy(), RS_PX * 1.7, 0, TAU); ctx0.fill();
+      // event horizon (black disk)
+      ctx0.fillStyle = "#000";
+      ctx0.beginPath(); ctx0.arc(cx(), cy(), RS_PX, 0, TAU); ctx0.fill();
+      ctx0.strokeStyle = "rgba(120,130,150,0.5)"; ctx0.lineWidth = 1; ctx0.stroke();
+
+      // reference rays
+      if (ckRays.checked) {
+        const refs = [1.6, 2.598, 3.6, 4.8];
+        for (const rb of refs) {
+          for (const sgn of [1, -1]) {
+            const res = photonPath(sgn * rb);
+            drawPathCurve(res.pts, res.captured ? "rgba(224,119,47,0.32)" : "rgba(87,184,224,0.28)", 1.3, 1);
+          }
+        }
+      }
+
+      // main draggable ray
+      const col = captured ? "#e0772f" : (Math.abs(Math.abs(b) - B_CRIT) < 0.18 ? "#d9b94a" : "#57b8e0");
+      drawPathCurve(path, col, 2.6, 1);
+
+      // animated photon dot travelling along path
+      dotT += 0.006;
+      if (dotT > 1) dotT = 0;
+      const idx = Math.min(path.length - 1, Math.floor(dotT * path.length));
+      const sp = toScreen(path[idx]);
+      // keep dot on screen-ish
+      ctx0.shadowColor = col; ctx0.shadowBlur = 12;
+      ctx0.fillStyle = "#fff";
+      ctx0.beginPath(); ctx0.arc(sp[0], sp[1], 3.4, 0, TAU); ctx0.fill();
+      ctx0.shadowBlur = 0;
+
+      // draggable handle on the right at the incoming height
+      const hy = cy() - b * RS_PX;
+      const hx = w - 16;
+      ctx0.fillStyle = col;
+      ctx0.beginPath(); ctx0.arc(hx, hy, 6, 0, TAU); ctx0.fill();
+      ctx0.strokeStyle = "rgba(255,255,255,0.6)"; ctx0.lineWidth = 1; ctx0.stroke();
+      ctx0.fillStyle = "rgba(180,190,205,0.8)";
+      ctx0.font = "11px -apple-system, system-ui, sans-serif"; ctx0.textAlign = "right"; ctx0.textBaseline = "middle";
+      ctx0.fillText("drag", hx - 12, hy);
+
+      requestAnimationFrame(draw);
+    }
+    recompute();
+    requestAnimationFrame(draw);
+  })();
+
+  // ============================================================
+  // FIGURE 2: tilting light cones
+  // ============================================================
+  (function () {
+    const canvas = document.getElementById("cv-cones");
+    const slR = document.getElementById("sl-r");
+    const stCones = document.getElementById("st-cones");
+    const H = 300;
+    let view = hidpi(canvas, H);
+
+    function resize() { view = hidpi(canvas, H); }
+    window.addEventListener("resize", resize);
+
+    // map radial coordinate r (in r_s) to x on screen. horizon r=1.
+    // place r from 0.3 (left) to 4.2 (right)
+    const RMIN = 0.3, RMAX = 4.3;
+    function rToX(r, w) { return lerp(w * 0.08, w * 0.94, (r - RMIN) / (RMAX - RMIN)); }
+
+    // light cone half-shape at radius r: returns slopes of the two edges (dt/dx) in screen space.
+    // outgoing edge slope ~ 1/(1 - 1/r), ingoing ~ -1/(1 + ... ); we render tipping.
+    function coneEdges(r) {
+      // factor f = 1 - 1/r (negative inside horizon)
+      const f = 1 - 1 / r;
+      // outgoing light dt/dr = 1/f ; ingoing dt/dr = -1/f... use a tipping angle model
+      // represent cone by two directions; tip angle grows as r->1
+      // outgoing direction vector (dr, dt): proportional to (f, 1) normalized -> as f->0 it points straight up (dt), inside f<0 points left
+      const out = [f, 1];
+      const ing = [-1, 1]; // ingoing light always moves to smaller r
+      return { out, ing };
+    }
+
+    function draw() {
+      const ctx = view.ctx, w = view.w;
+      ctx.clearRect(0, 0, w, H);
+      const baseY = H * 0.74;     // where cones sit (their event point)
+      const coneH = H * 0.42;     // vertical reach
+      // horizon vertical line
+      const hx = rToX(1, w);
+      ctx.strokeStyle = "rgba(217,185,74,0.6)"; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(hx, 12); ctx.lineTo(hx, H - 30); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(217,185,74,0.85)"; ctx.font = "11.5px -apple-system, system-ui, sans-serif";
+      ctx.textAlign = "center"; ctx.fillText("event horizon", hx, H - 14);
+      // shaded region inside horizon
+      ctx.fillStyle = "rgba(0,0,0,0.45)";
+      ctx.fillRect(0, 0, hx, H - 28);
+
+      // axes hint
+      ctx.fillStyle = "rgba(150,160,178,0.8)"; ctx.textAlign = "left";
+      ctx.fillText("time →", 10, 18);
+      ctx.save(); ctx.translate(12, 18); ctx.restore();
+
+      // draw a row of reference cones
+      const rs = [4.0, 3.2, 2.5, 2.0, 1.6, 1.3, 1.0, 0.78, 0.55];
+      const obsR = parseFloat(slR.value);
+      for (const r of rs) drawCone(ctx, r, w, baseY, coneH, false);
+      // observer cone (highlighted)
+      drawCone(ctx, obsR, w, baseY, coneH, true);
+
+      // status
+      if (obsR > 1.02) { stCones.textContent = "outside · free to move outward"; stCones.className = "status esc"; }
+      else if (obsR > 0.98) { stCones.textContent = "at the horizon · outgoing light frozen"; stCones.className = "status orbit"; }
+      else { stCones.textContent = "inside · every future points in"; stCones.className = "status cap"; }
+    }
+
+    function drawCone(ctx, r, w, baseY, coneH, hi) {
+      const x = rToX(r, w);
+      const { out, ing } = coneEdges(r);
+      // normalize each direction so its vertical (time) extent ~ coneH, but inside horizon time still up
+      function endpoint(dir) {
+        // dir = [dx_screen(=dr), dt]. On screen, +dr is +x, +dt is -y (up).
+        // scale so the larger of |components| maps to coneH
+        const len = Math.hypot(dir[0], dir[1]) || 1;
+        const sc = coneH / Math.max(0.55, Math.abs(dir[1])) * 0.9;
+        // clamp horizontal stretch
+        let dx = dir[0] * sc, dy = dir[1] * sc;
+        const maxdx = coneH * 1.3;
+        if (Math.abs(dx) > maxdx) { const k = maxdx / Math.abs(dx); dx *= k; dy *= k; }
+        return [x + dx, baseY - dy];
+      }
+      const pOut = endpoint(out);
+      const pIng = endpoint(ing);
+      // fill cone wedge
+      ctx.beginPath();
+      ctx.moveTo(x, baseY);
+      ctx.lineTo(pOut[0], pOut[1]);
+      ctx.lineTo(pIng[0], pIng[1]);
+      ctx.closePath();
+      ctx.fillStyle = hi ? "rgba(87,184,224,0.28)" : "rgba(120,140,170,0.12)";
+      ctx.fill();
+      // edges
+      ctx.strokeStyle = hi ? "#57b8e0" : "rgba(150,165,190,0.5)";
+      ctx.lineWidth = hi ? 2 : 1.2;
+      ctx.beginPath(); ctx.moveTo(x, baseY); ctx.lineTo(pOut[0], pOut[1]); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, baseY); ctx.lineTo(pIng[0], pIng[1]); ctx.stroke();
+      // event dot
+      ctx.fillStyle = hi ? "#fff" : "rgba(180,190,205,0.7)";
+      ctx.beginPath(); ctx.arc(x, baseY, hi ? 4 : 2.4, 0, TAU); ctx.fill();
+      if (hi) {
+        ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px -apple-system, system-ui, sans-serif";
+        ctx.textAlign = "center"; ctx.fillText("observer", x, baseY + 16);
+      }
+    }
+
+    let raf;
+    function loop() { draw(); raf = requestAnimationFrame(loop); }
+    loop();
+  })();
+
+  // ============================================================
+  // FIGURE 3: gravitational lensing (grid / stars warped)
+  // ============================================================
+  (function () {
+    const canvas = document.getElementById("cv-lens");
+    const stLens = document.getElementById("st-lens");
+    const btGrid = document.getElementById("bt-lens-grid");
+    const H = 420;
+    let view = hidpi(canvas, H);
+    let offX = 0, offY = 0;          // pan of the background
+    let dragging = false, lastX = 0, lastY = 0;
+    let showGrid = true;
+    const SHADOW = 52;               // shadow radius px
+    let stars = makeStars(150, 1200, 900, 99);
+
+    function resize() { view = hidpi(canvas, H); }
+    window.addEventListener("resize", resize);
+    function cx() { return view.w / 2; }
+    function cy() { return H / 2; }
+
+    // lensing displacement: a source point at screen radius rho (from center) appears
+    // pushed outward. We invert: for an apparent point at radius rho, sample the source
+    // at radius rhoSrc = rho - deflection(rho). Use a 1/rho falloff (weak-field-like) that
+    // blows up near the shadow so the grid piles into a ring.
+    function srcRadius(rho) {
+      if (rho < SHADOW) return -1; // inside shadow -> nothing
+      const k = SHADOW * SHADOW * 1.35;
+      return rho - k / rho;
+    }
+
+    function pointer(e) {
+      const r = canvas.getBoundingClientRect();
+      return [(e.touches ? e.touches[0].clientX : e.clientX) - r.left,
+              (e.touches ? e.touches[0].clientY : e.clientY) - r.top];
+    }
+    function down(e) { e.preventDefault(); dragging = true; const p = pointer(e); lastX = p[0]; lastY = p[1]; }
+    function move(e) {
+      if (!dragging) return; e.preventDefault();
+      const p = pointer(e); offX += p[0] - lastX; offY += p[1] - lastY; lastX = p[0]; lastY = p[1];
+    }
+    function up() { dragging = false; }
+    canvas.addEventListener("mousedown", down);
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+    canvas.addEventListener("touchstart", down, { passive: false });
+    canvas.addEventListener("touchmove", move, { passive: false });
+    window.addEventListener("touchend", up);
+    btGrid.addEventListener("click", () => { showGrid = !showGrid; });
+
+    // map an apparent screen point to its source-space coordinates (lensed lookup)
+    function lensLookup(px, py) {
+      const dx = px - cx(), dy = py - cy();
+      const rho = Math.hypot(dx, dy);
+      const rs = srcRadius(rho);
+      if (rs < 0) return null;
+      const f = rs / rho;
+      return [cx() + dx * f - offX, cy() + dy * f - offY];
+    }
+
+    function draw() {
+      const ctx = view.ctx, w = view.w;
+      ctx.clearRect(0, 0, w, H);
+      // background fill
+      ctx.fillStyle = "#06080d"; ctx.fillRect(0, 0, w, H);
+
+      if (showGrid) {
+        // draw lensed grid by transforming sample points along each grid line
+        ctx.strokeStyle = "rgba(90,150,210,0.55)"; ctx.lineWidth = 1;
+        const G = 46;
+        // vertical lines of the source grid -> draw as warped curves in apparent space
+        // Instead, march apparent-space lines and color by source grid membership is hard;
+        // simpler: for each source grid line, plot its lensed image by sampling source points
+        // and finding apparent position (forward map). Forward map: apparent rho solves rho - k/rho = rs.
+        function fwdRho(rs) {
+          // invert rho - k/rho = rs  -> rho^2 - rs*rho - k = 0
+          const k = SHADOW * SHADOW * 1.35;
+          return (rs + Math.sqrt(rs * rs + 4 * k)) / 2;
+        }
+        function fwd(sx, sy) {
+          const dx = sx + offX - cx(), dy = sy + offY - cy();
+          const rs = Math.hypot(dx, dy);
+          if (rs < 0.001) return null;
+          const rho = fwdRho(rs);
+          const f = rho / rs;
+          return [cx() + dx * f, cy() + dy * f];
+        }
+        const ext = 1.4;
+        const x0 = -w * (ext - 1), x1 = w * ext, y0 = -H * (ext - 1), y1 = H * ext;
+        for (let gx = Math.floor(x0 / G) * G; gx <= x1; gx += G) {
+          ctx.beginPath(); let started = false;
+          for (let sy = y0; sy <= y1; sy += 6) {
+            const p = fwd(gx, sy); if (!p) { started = false; continue; }
+            if (!started) { ctx.moveTo(p[0], p[1]); started = true; } else ctx.lineTo(p[0], p[1]);
+          }
+          ctx.stroke();
+        }
+        for (let gy = Math.floor(y0 / G) * G; gy <= y1; gy += G) {
+          ctx.beginPath(); let started = false;
+          for (let sx = x0; sx <= x1; sx += 6) {
+            const p = fwd(sx, gy); if (!p) { started = false; continue; }
+            if (!started) { ctx.moveTo(p[0], p[1]); started = true; } else ctx.lineTo(p[0], p[1]);
+          }
+          ctx.stroke();
+        }
+      } else {
+        // stars: draw each star at its lensed (possibly multiple) apparent positions via forward map
+        function fwdRho(rs) { const k = SHADOW * SHADOW * 1.35; return (rs + Math.sqrt(rs * rs + 4 * k)) / 2; }
+        for (const stp of stars) {
+          const sx = (stp.x % (w * 1.4)) - w * 0.2;
+          const sy = (stp.y % (H * 1.4)) - H * 0.2;
+          const dx = sx + offX - cx(), dy = sy + offY - cy();
+          const rs = Math.hypot(dx, dy); if (rs < 0.5) continue;
+          const rho = fwdRho(rs); const f = rho / rs;
+          const ax = cx() + dx * f, ay = cy() + dy * f;
+          ctx.fillStyle = "rgba(210,222,240," + stp.b + ")";
+          ctx.beginPath(); ctx.arc(ax, ay, stp.s, 0, TAU); ctx.fill();
+        }
+      }
+
+      // bright photon ring at the shadow edge
+      const ring = ctx.createRadialGradient(cx(), cy(), SHADOW * 0.92, cx(), cy(), SHADOW * 1.18);
+      ring.addColorStop(0, "rgba(255,210,140,0)");
+      ring.addColorStop(0.5, "rgba(255,205,140,0.9)");
+      ring.addColorStop(1, "rgba(255,180,90,0)");
+      ctx.fillStyle = ring;
+      ctx.beginPath(); ctx.arc(cx(), cy(), SHADOW * 1.18, 0, TAU); ctx.fill();
+      // shadow disk
+      ctx.fillStyle = "#000";
+      ctx.beginPath(); ctx.arc(cx(), cy(), SHADOW, 0, TAU); ctx.fill();
+
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  })();
+
+})();
+</script>
+</body>
+</html>

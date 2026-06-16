@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noise Canceling</title>
+<meta name="description" content="An interactive, audible explanation of how noise-canceling headphones erase sound with more sound.">
+
+<link rel="icon" type="image/jpeg" href="/assets/personal-website-pic.jpeg">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://viraat.dev/noise-canceling">
+<meta property="og:title" content="Noise Canceling">
+<meta property="og:description" content="An interactive, audible explanation of how noise-canceling headphones erase sound with more sound.">
+<meta property="og:image" content="https://viraat.dev/assets/personal-website-pic.jpeg">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:title" content="Noise Canceling">
+<meta property="twitter:description" content="An interactive, audible explanation of how noise-canceling headphones erase sound with more sound.">
+<meta property="twitter:image" content="https://viraat.dev/assets/personal-website-pic.jpeg">
+
+<style>
+  :root {
+    --ink: #161719;
+    --ink-strong: #050608;
+    --muted: #565d64;
+    --link: #2a6fb5;
+    --rule: #e6e8eb;
+    --fig-bg: #fbfcfd;
+    --fig-border: #e7eaee;
+    --waveA: #2a6fb5;
+    --waveB: #e0772f;
+    --sum: #14161a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink); background: #fff;
+    font-size: 18px; line-height: 1.7;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 22px 8rem; }
+  .topnav { max-width: 680px; margin: 0 auto; padding: 1.6rem 22px 0; font-size: 14px; }
+  .topnav a { color: var(--muted); text-decoration: none; }
+  .topnav a:hover { color: var(--ink); }
+  header.post { padding: 3.2rem 0 1.2rem; }
+  header.post h1 { font-size: 40px; line-height: 1.15; letter-spacing: -0.02em; color: var(--ink-strong); font-weight: 700; }
+  header.post .meta { margin-top: 0.9rem; color: var(--muted); font-size: 15px; }
+  p { margin: 1.25rem 0; }
+  h2 { margin: 3.2rem 0 0.4rem; font-size: 26px; line-height: 1.25; letter-spacing: -0.01em; color: var(--ink-strong); font-weight: 700; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  em { font-style: italic; }
+  strong { font-weight: 650; }
+  .lead { font-size: 19px; }
+  .note { font-size: 15px; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 1rem; margin: 1.6rem 0; }
+  figure { margin: 2.4rem 0; }
+  .fig-canvas-wrap { background: var(--fig-bg); border: 1px solid var(--fig-border); border-radius: 10px; overflow: hidden; }
+  canvas { display: block; width: 100%; touch-action: none; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1.4rem; padding: 0.95rem 1.05rem; border-top: 1px solid var(--fig-border); font-size: 14px; color: var(--ink); }
+  .ctrl { display: flex; align-items: center; gap: 0.55rem; white-space: nowrap; }
+  .ctrl label { color: var(--muted); }
+  input[type="range"] { -webkit-appearance: none; appearance: none; height: 4px; width: 130px; background: #d7dbe0; border-radius: 999px; outline: none; cursor: pointer; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 17px; height: 17px; border-radius: 50%; background: #fff; border: 1px solid #b7bdc4; box-shadow: 0 1px 2px rgba(0,0,0,0.18); cursor: pointer; }
+  input[type="range"]::-moz-range-thumb { width: 17px; height: 17px; border-radius: 50%; background: #fff; border: 1px solid #b7bdc4; box-shadow: 0 1px 2px rgba(0,0,0,0.18); cursor: pointer; }
+  .btn { font: inherit; font-size: 13.5px; padding: 0.34rem 0.85rem; border: 1px solid #ccd1d6; border-radius: 7px; background: #fff; color: var(--ink); cursor: pointer; }
+  .btn:hover { background: #f1f3f5; }
+  .btn.primary { border-color: #b9d0ea; background: #eef5fc; color: #1d588f; font-weight: 600; }
+  .btn.primary:hover { background: #e2eefa; }
+  .btn.playing { border-color: #e0772f; background: #fcefe4; color: #95480f; }
+  .switch { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; user-select: none; }
+  .switch input { accent-color: var(--link); width: 15px; height: 15px; }
+  .status { font-size: 13.5px; color: var(--muted); }
+  .status.good { color: #1f7a4d; }
+  .status.loud { color: #b4561c; }
+  figcaption { font-size: 14.5px; color: var(--muted); margin-top: 0.85rem; line-height: 1.6; }
+  hr.end { border: none; border-top: 1px solid var(--rule); margin: 3.5rem 0 1.6rem; }
+  footer.post { color: var(--muted); font-size: 14.5px; }
+  footer.post a { color: var(--link); }
+  @media (max-width: 560px) {
+    body { font-size: 17px; }
+    header.post h1 { font-size: 32px; }
+    h2 { font-size: 23px; }
+    input[type="range"] { width: 108px; }
+    .controls { gap: 0.6rem 1rem; }
+  }
+</style>
+</head>
+<body>
+  <nav class="topnav"><a href="/">← viraat.dev</a></nav>
+
+  <div class="wrap">
+    <header class="post">
+      <h1>Noise Canceling</h1>
+      <div class="meta">An interactive explainer · turn your sound on, these figures make noise</div>
+    </header>
+
+    <p class="lead">Noise-canceling headphones do something that sounds impossible the first time you hear it described. They make silence by adding <em>more</em> sound. Not by blocking your ears, not by drowning the noise out, but by playing a second sound so precisely shaped that it erases the first one. This piece explains how, and it lets you hear every step.</p>
+
+    <p class="note">A heads up: the figures below actually play audio. Find the volume you like, then start hitting the play buttons. Headphones help, but anything works.</p>
+
+    <h2>Sound is just air, wiggling</h2>
+
+    <p>When something vibrates, it shoves the air next to it. That air shoves the air next to <em>it</em>, and a ripple of pressure races outward at about 340 meters per second. When the ripple reaches your eardrum, it pushes and pulls, and your brain calls the pattern a sound.</p>
+
+    <p>A pure tone is the simplest version: the pressure rises and falls in a smooth, repeating curve, a <strong>sine wave</strong>. How fast it repeats is the <strong>frequency</strong>, which you hear as pitch. How tall it is, the <strong>amplitude</strong>, is how loud it feels. Play with both and listen.</p>
+
+    <figure>
+      <div class="fig-canvas-wrap"><canvas id="cv-wave"></canvas></div>
+      <div class="controls">
+        <button class="btn primary" id="bt-wave">▶ play tone</button>
+        <div class="ctrl"><label for="sl-freq">pitch</label><input type="range" id="sl-freq" min="80" max="700" step="1" value="220"><span class="status" id="st-freq">220 Hz</span></div>
+        <div class="ctrl"><label for="sl-amp">volume</label><input type="range" id="sl-amp" min="0" max="1" step="0.01" value="0.5"></div>
+      </div>
+      <figcaption>The dot on the left is a single patch of air, just bobbing back and forth. The curve is that motion stretched out over time.</figcaption>
+    </figure>
+
+    <h2>Two waves add up</h2>
+
+    <p>Here is the fact that makes everything else work. When two sound waves arrive at the same spot, the air does not pick one. It simply adds them. At every instant, the push from one wave and the push from the other combine into a single push.</p>
+
+    <p>If two waves rise and fall together, they reinforce and you get a louder wave. But if one wave rises exactly while the other falls, they fight. Line them up perfectly out of step, same shape, opposite direction, and they cancel completely. The pushes and pulls sum to nothing. Silence.</p>
+
+    <p>The orange wave below is a copy of the blue one, and you control how far out of step it is. Drag it to <strong>180°</strong> and the black sum goes flat. Then press play and listen to it disappear.</p>
+
+    <figure>
+      <div class="fig-canvas-wrap"><canvas id="cv-add"></canvas></div>
+      <div class="controls">
+        <button class="btn primary" id="bt-add">▶ play the sum</button>
+        <div class="ctrl"><label for="sl-phase">phase</label><input type="range" id="sl-phase" min="0" max="360" step="1" value="0"><span class="status" id="st-phase">0°</span></div>
+        <div class="ctrl"><label for="sl-amp2">orange volume</label><input type="range" id="sl-amp2" min="0" max="1" step="0.01" value="1"></div>
+      </div>
+      <figcaption>You are hearing only the black sum. At 0° the two waves stack into something twice as loud. At 180° with matched volume, they vanish into nothing.</figcaption>
+    </figure>
+
+    <h2>So: listen, flip, play it back</h2>
+
+    <p>That is the entire trick. A noise-canceling headphone is a little machine bolted to the side of your head that does three things, thousands of times a second.</p>
+
+    <p>A tiny <strong>microphone</strong> on the outside listens to the noise heading for your ear. A chip <strong>flips</strong> that noise upside down, turning every push into a pull. And a <strong>speaker</strong> on the inside plays the flipped version, the <em>anti-noise</em>, right next to your eardrum. The original noise and the anti-noise arrive together, add up, and cancel. You are left with the quiet.</p>
+
+    <p>Below is a droning engine hum, the kind you get on a plane. Press play to suffer through it, then switch the cancellation on. The blue anti-noise appears, the residual at your ear collapses, and the drone falls away.</p>
+
+    <figure>
+      <div class="fig-canvas-wrap"><canvas id="cv-anc"></canvas></div>
+      <div class="controls">
+        <button class="btn primary" id="bt-anc">▶ play noise</button>
+        <label class="switch"><input type="checkbox" id="ck-anc"> cancellation on</label>
+        <div class="ctrl"><label for="sl-match">anti-noise accuracy</label><input type="range" id="sl-match" min="0" max="1" step="0.01" value="1"></div>
+        <span class="status" id="st-anc">noise only</span>
+      </div>
+      <figcaption>Red is the noise coming in. Blue is the anti-noise the headphone generates. Black is what is left at your eardrum. Nudge the accuracy down and the cancellation gets sloppy, because real microphones and speakers are never perfect.</figcaption>
+    </figure>
+
+    <h2>Why it only kills the hum</h2>
+
+    <p>If this worked on everything, the world would be silent on demand. It does not, and the reason is timing.</p>
+
+    <p>To cancel a wave you have to play its mirror image at exactly the right moment. Get the timing wrong by even a fraction of the wave's length and your anti-noise stops subtracting and starts adding. Low sounds, like an engine, have long slow waves. There is plenty of time to measure them and fire back in step, so they cancel beautifully. High sounds, like a voice or a clatter, have tiny fast waves. By the time the chip has measured one and computed its opposite, the wave has already moved on, and the anti-noise lands in the wrong place.</p>
+
+    <p>Slide up the frequency and watch the cancellation fall apart.</p>
+
+    <figure>
+      <div class="fig-canvas-wrap"><canvas id="cv-freq"></canvas></div>
+      <div class="controls">
+        <button class="btn primary" id="bt-freq">▶ play with cancellation</button>
+        <div class="ctrl"><label for="sl-freq2">frequency</label><input type="range" id="sl-freq2" min="60" max="4000" step="10" value="120"><span class="status" id="st-freq2">120 Hz</span></div>
+        <span class="status" id="st-freq2b">strong cancellation</span>
+      </div>
+      <figcaption>The headphone is always trying to cancel, with a fixed small timing error. Down in engine-hum territory it wins. Up where voices live, the same error ruins the alignment and the noise leaks through. This is why your headphones mute the plane but not the baby two rows back.</figcaption>
+    </figure>
+
+    <h2>The two kinds of listening</h2>
+
+    <p>Real headphones usually run two microphones. A <strong>feedforward</strong> mic sits on the outside and hears the noise before it arrives, giving the chip a head start. A <strong>feedback</strong> mic sits inside, next to the speaker, and listens to whatever is left after cancellation, so the system can correct its own mistakes in real time. Good headphones blend both, which is why their noise canceling feels almost alive, leaning into a steady rumble and easing off when things go quiet.</p>
+
+    <p>None of it is magic. It is just the same humble fact you heard a few figures ago, that two equal and opposite waves add up to nothing, executed very fast and very precisely a few millimeters from your ear.</p>
+
+    <hr class="end">
+    <footer class="post">
+      <p>Written by <a href="/">Viraat Das</a>. Built in the spirit of <a href="https://ciechanow.ski/" target="_blank" rel="noopener">Bartosz Ciechanowski</a>'s interactive essays. Part of a small series, alongside <a href="/picking-locks">Picking Locks</a>.</p>
+    </footer>
+  </div>
+
+<script>
+"use strict";
+(function () {
+  // ---------- shared audio engine ----------
+  const AE = (function () {
+    let ctx = null, master = null;
+    function ensure() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        try { ctx = new AC(); } catch (e) { return null; }
+        master = ctx.createGain(); master.gain.value = 0.45; master.connect(ctx.destination);
+      }
+      if (ctx.state === "suspended") ctx.resume();
+      return ctx;
+    }
+    return { ensure, get ctx() { return ctx; }, get master() { return master; } };
+  })();
+
+  function hidpi(canvas, cssH) {
+    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    const cssW = canvas.clientWidth || canvas.parentElement.clientWidth;
+    canvas.style.height = cssH + "px";
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w: cssW, h: cssH };
+  }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  // draw a smooth waveform across the canvas for function y(x in [0,1]) -> value in [-1,1]
+  function drawWave(ctx, w, midY, ampPx, fn, color, lw) {
+    ctx.beginPath();
+    const N = Math.max(120, Math.floor(w));
+    for (let i = 0; i <= N; i++) {
+      const x = (i / N) * w;
+      const y = midY - fn(i / N) * ampPx;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = color; ctx.lineWidth = lw || 2; ctx.lineJoin = "round";
+    ctx.stroke();
+  }
+  function axis(ctx, w, midY, color) {
+    ctx.strokeStyle = color || "#e2e6ea"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke();
+  }
+
+  // a clean looping buffer that holds an integer number of periods of baseFreq
+  function loopBuffer(ctx, baseFreq, fn) {
+    const minDur = 0.2;
+    const cycles = Math.max(1, Math.round(minDur * baseFreq));
+    const dur = cycles / baseFreq;
+    const len = Math.floor(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      const t = i / ctx.sampleRate;
+      d[i] = fn(t);
+    }
+    return buf;
+  }
+
+  const TAU = Math.PI * 2;
+
+  // ============================================================
+  // FIGURE 1: single wave + audible tone
+  // ============================================================
+  (function () {
+    const canvas = document.getElementById("cv-wave");
+    const btn = document.getElementById("bt-wave");
+    const slFreq = document.getElementById("sl-freq");
+    const slAmp = document.getElementById("sl-amp");
+    const stFreq = document.getElementById("st-freq");
+    const H = 220;
+    let view = hidpi(canvas, H);
+    let osc = null, gain = null, playing = false;
+    let phase = 0, last = null;
+
+    function resize() { view = hidpi(canvas, H); }
+    window.addEventListener("resize", resize);
+
+    function freq() { return parseFloat(slFreq.value); }
+    function amp() { return parseFloat(slAmp.value); }
+
+    function start() {
+      const c = AE.ensure(); if (!c) return;
+      osc = c.createOscillator(); gain = c.createGain();
+      osc.type = "sine"; osc.frequency.value = freq();
+      gain.gain.value = amp() * 0.5;
+      osc.connect(gain); gain.connect(AE.master);
+      osc.start(); playing = true;
+      btn.classList.add("playing"); btn.textContent = "■ stop";
+    }
+    function stop() {
+      if (osc) { try { osc.stop(); } catch (e) {} osc.disconnect(); osc = null; }
+      playing = false;
+      btn.classList.remove("playing"); btn.textContent = "▶ play tone";
+    }
+    btn.addEventListener("click", () => { if (playing) stop(); else start(); });
+    slFreq.addEventListener("input", () => { stFreq.textContent = freq() + " Hz"; if (osc) osc.frequency.value = freq(); });
+    slAmp.addEventListener("input", () => { if (gain) gain.gain.value = amp() * 0.5; });
+
+    function draw(ts) {
+      if (last == null) last = ts;
+      const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+      // visual frequency is scaled down from audible so it reads on screen
+      const vf = freq() / 90;
+      phase += dt * vf;
+      const ctx = view.ctx, w = view.w, midY = H / 2;
+      ctx.clearRect(0, 0, w, H);
+      axis(ctx, w, midY);
+      const a = amp();
+      const ampPx = (H / 2 - 24) * (0.15 + 0.85 * a);
+      const cycles = 3.2;
+      const fn = u => Math.sin(u * cycles * TAU - phase * TAU);
+      drawWave(ctx, w, midY, ampPx, fn, "#2a6fb5", 2.4);
+      // bobbing air dot at left
+      const dotY = midY - fn(0) * ampPx;
+      ctx.fillStyle = "#2a6fb5";
+      ctx.beginPath(); ctx.arc(26, dotY, 6, 0, TAU); ctx.fill();
+      ctx.strokeStyle = "rgba(42,111,181,0.25)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(26, midY - ampPx); ctx.lineTo(26, midY + ampPx); ctx.stroke();
+      requestAnimationFrame(draw);
+    }
+    stFreq.textContent = freq() + " Hz";
+    requestAnimationFrame(draw);
+  })();
+
+  // ============================================================
+  // FIGURE 2: superposition + audible cancellation
+  // ============================================================
+  (function () {
+    const canvas = document.getElementById("cv-add");
+    const btn = document.getElementById("bt-add");
+    const slPhase = document.getElementById("sl-phase");
+    const slAmp2 = document.getElementById("sl-amp2");
+    const stPhase = document.getElementById("st-phase");
+    const H = 250;
+    let view = hidpi(canvas, H);
+    let node = null, gain = null, playing = false;
+    let anim = 0, last = null;
+    const F = 220;
+
+    function resize() { view = hidpi(canvas, H); }
+    window.addEventListener("resize", resize);
+    function phi() { return parseFloat(slPhase.value) * Math.PI / 180; }
+    function ampB() { return parseFloat(slAmp2.value); }
+
+    function sumFn(t) {
+      return 0.32 * (Math.sin(TAU * F * t) + ampB() * Math.sin(TAU * F * t + phi()));
+    }
+    function rebuild() {
+      const c = AE.ctx; if (!c || !playing) return;
+      if (node) { try { node.stop(); } catch (e) {} node.disconnect(); }
+      const buf = loopBuffer(c, F, sumFn);
+      node = c.createBufferSource(); node.buffer = buf; node.loop = true;
+      node.connect(gain); node.start();
+    }
+    function start() {
+      const c = AE.ensure(); if (!c) return;
+      gain = c.createGain(); gain.gain.value = 0.9; gain.connect(AE.master);
+      playing = true; rebuild();
+      btn.classList.add("playing"); btn.textContent = "■ stop";
+    }
+    function stop() {
+      if (node) { try { node.stop(); } catch (e) {} node.disconnect(); node = null; }
+      playing = false;
+      btn.classList.remove("playing"); btn.textContent = "▶ play the sum";
+    }
+    btn.addEventListener("click", () => { if (playing) stop(); else start(); });
+    slPhase.addEventListener("input", () => { stPhase.textContent = slPhase.value + "°"; rebuild(); });
+    slAmp2.addEventListener("input", rebuild);
+
+    function loudness() {
+      // rms of the sum over one period, normalized so two identical waves -> ~1
+      let s = 0; const N = 200;
+      for (let i = 0; i < N; i++) {
+        const t = i / N / F;
+        const v = Math.sin(TAU * F * t) + ampB() * Math.sin(TAU * F * t + phi());
+        s += v * v;
+      }
+      return Math.sqrt(s / N) / Math.SQRT2; // 0..~1
+    }
+
+    function draw(ts) {
+      if (last == null) last = ts;
+      const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+      anim += dt * (F / 90);
+      const ctx = view.ctx, w = view.w;
+      ctx.clearRect(0, 0, w, H);
+      const cycles = 3.0;
+      const off = anim * TAU;
+      const topY = H * 0.3, botY = H * 0.72;
+      const ampPx = 38;
+      // top lane: A and B
+      axis(ctx, w, topY, "#eef1f4");
+      drawWave(ctx, w, topY, ampPx, u => Math.sin(u * cycles * TAU - off), "#2a6fb5", 2);
+      drawWave(ctx, w, topY, ampPx, u => ampB() * Math.sin(u * cycles * TAU - off + phi()), "#e0772f", 2);
+      // bottom lane: sum
+      axis(ctx, w, botY, "#eef1f4");
+      drawWave(ctx, w, botY, ampPx, u => 0.5 * (Math.sin(u * cycles * TAU - off) + ampB() * Math.sin(u * cycles * TAU - off + phi())), "#14161a", 2.6);
+      // labels
+      ctx.font = "12.5px -apple-system, system-ui, sans-serif"; ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = "#565d64"; ctx.textAlign = "left";
+      ctx.fillText("the two waves", 8, topY - ampPx - 8);
+      ctx.fillText("their sum (what you hear)", 8, botY - ampPx - 8);
+      // loudness meter
+      const L = loudness();
+      const mx = w - 130, my = botY + 0; // place meter at right
+      ctx.fillStyle = "#565d64"; ctx.textAlign = "right";
+      ctx.fillText(L < 0.06 ? "silent" : L > 1.4 ? "loud" : "loudness", w - 8, H - 12);
+      ctx.fillStyle = "#e7eaee";
+      const barW = 120, barX = w - 8 - barW, barY = H - 10;
+      ctx.fillRect(barX, barY, barW, 5);
+      ctx.fillStyle = L < 0.06 ? "#1f7a4d" : L > 1.2 ? "#b4561c" : "#2a6fb5";
+      ctx.fillRect(barX, barY, barW * clamp(L / 2, 0, 1), 5);
+      requestAnimationFrame(draw);
+    }
+    stPhase.textContent = slPhase.value + "°";
+    requestAnimationFrame(draw);
+  })();
+
+  // ============================================================
+  // FIGURE 3: ANC demo (noise -> anti-noise -> residual)
+  // ============================================================
+  (function () {
+    const canvas = document.getElementById("cv-anc");
+    const btn = document.getElementById("bt-anc");
+    const ckAnc = document.getElementById("ck-anc");
+    const slMatch = document.getElementById("sl-match");
+    const stAnc = document.getElementById("st-anc");
+    const H = 260;
+    let view = hidpi(canvas, H);
+    let node = null, gain = null, playing = false;
+    let anim = 0, last = null;
+    const F = 110; // engine-hum fundamental
+    // a richer drone: fundamental + a couple harmonics
+    const harm = [[1, 1.0], [2, 0.45], [3, 0.25]];
+
+    function resize() { view = hidpi(canvas, H); }
+    window.addEventListener("resize", resize);
+    function noiseAt(t, ph) {
+      let v = 0;
+      for (const [n, a] of harm) v += a * Math.sin(TAU * F * n * t + ph * n);
+      return v;
+    }
+    function match() { return parseFloat(slMatch.value); }
+    function residualFn(t) {
+      const noise = noiseAt(t, 0);
+      if (!ckAnc.checked) return 0.26 * noise;
+      // anti-noise = inverted noise, but delayed slightly and scaled by accuracy
+      const acc = match();
+      const delay = (1 - acc) * 0.0016; // up to ~1.6ms timing error
+      const anti = -acc * noiseAt(t - delay, 0);
+      return 0.26 * (noise + anti);
+    }
+    function rebuild() {
+      const c = AE.ctx; if (!c || !playing) return;
+      if (node) { try { node.stop(); } catch (e) {} node.disconnect(); }
+      const buf = loopBuffer(c, F, residualFn);
+      node = c.createBufferSource(); node.buffer = buf; node.loop = true;
+      node.connect(gain); node.start();
+    }
+    function start() {
+      const c = AE.ensure(); if (!c) return;
+      gain = c.createGain(); gain.gain.value = 1.0; gain.connect(AE.master);
+      playing = true; rebuild();
+      btn.classList.add("playing"); btn.textContent = "■ stop";
+    }
+    function stop() {
+      if (node) { try { node.stop(); } catch (e) {} node.disconnect(); node = null; }
+      playing = false;
+      btn.classList.remove("playing"); btn.textContent = "▶ play noise";
+    }
+    btn.addEventListener("click", () => { if (playing) stop(); else start(); });
+    ckAnc.addEventListener("change", () => { AE.ensure(); rebuild(); updateStatus(); });
+    slMatch.addEventListener("input", () => { rebuild(); updateStatus(); });
+
+    function residualLevel() {
+      let s = 0; const N = 240;
+      for (let i = 0; i < N; i++) { const v = residualFn(i / N / F); s += v * v; }
+      let ref = 0;
+      for (let i = 0; i < N; i++) { const v = 0.26 * noiseAt(i / N / F, 0); ref += v * v; }
+      return Math.sqrt(s / ref); // fraction of original loudness
+    }
+    function updateStatus() {
+      if (!ckAnc.checked) { stAnc.textContent = "noise only"; stAnc.className = "status loud"; return; }
+      const r = residualLevel();
+      if (r < 0.12) { stAnc.textContent = "almost silent"; stAnc.className = "status good"; }
+      else if (r < 0.45) { stAnc.textContent = "much quieter"; stAnc.className = "status good"; }
+      else { stAnc.textContent = "leaking through"; stAnc.className = "status loud"; }
+    }
+
+    function draw(ts) {
+      if (last == null) last = ts;
+      const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+      anim += dt * (F / 55);
+      const ctx = view.ctx, w = view.w;
+      ctx.clearRect(0, 0, w, H);
+      const off = anim * TAU;
+      const cyc = 2.6;
+      const laneA = H * 0.22, laneB = H * 0.5, laneC = H * 0.82;
+      const ampPx = 26;
+      const acc = match();
+      const dphi = (1 - acc) * 0.9; // visual phase error
+      // incoming noise (red)
+      axis(ctx, w, laneA, "#f1f3f5");
+      drawWave(ctx, w, laneA, ampPx, u => 0.5 * harmSum(u * cyc * TAU - off), "#d6492c", 2);
+      // anti-noise (blue) only when on
+      axis(ctx, w, laneB, "#f1f3f5");
+      if (ckAnc.checked) {
+        drawWave(ctx, w, laneB, ampPx, u => -acc * 0.5 * harmSum(u * cyc * TAU - off - dphi), "#2a6fb5", 2);
+      } else {
+        ctx.fillStyle = "#565d64"; ctx.font = "12.5px -apple-system, system-ui, sans-serif";
+        ctx.textAlign = "center"; ctx.fillText("(cancellation off)", w / 2, laneB + 4);
+      }
+      // residual (black)
+      axis(ctx, w, laneC, "#f1f3f5");
+      drawWave(ctx, w, laneC, ampPx, u => {
+        const noise = 0.5 * harmSum(u * cyc * TAU - off);
+        if (!ckAnc.checked) return noise;
+        return noise - acc * 0.5 * harmSum(u * cyc * TAU - off - dphi);
+      }, "#14161a", 2.4);
+      // labels
+      ctx.font = "12.5px -apple-system, system-ui, sans-serif"; ctx.textAlign = "left";
+      ctx.fillStyle = "#d6492c"; ctx.fillText("noise coming in", 8, laneA - ampPx - 6);
+      ctx.fillStyle = "#2a6fb5"; ctx.fillText("anti-noise from the headphone", 8, laneB - ampPx - 6);
+      ctx.fillStyle = "#14161a"; ctx.fillText("what reaches your eardrum", 8, laneC - ampPx - 6);
+      requestAnimationFrame(draw);
+    }
+    function harmSum(x) {
+      let v = 0; for (const [n, a] of harm) v += a * Math.sin(x * n); return v / 1.7;
+    }
+    updateStatus();
+    requestAnimationFrame(draw);
+  })();
+
+  // ============================================================
+  // FIGURE 4: frequency limit
+  // ============================================================
+  (function () {
+    const canvas = document.getElementById("cv-freq");
+    const btn = document.getElementById("bt-freq");
+    const slFreq = document.getElementById("sl-freq2");
+    const stFreq = document.getElementById("st-freq2");
+    const stEff = document.getElementById("st-freq2b");
+    const H = 200;
+    let view = hidpi(canvas, H);
+    let node = null, gain = null, playing = false;
+    let anim = 0, last = null;
+    const TIMING_ERR = 0.00018; // fixed ~0.18ms timing error of the canceller
+
+    function resize() { view = hidpi(canvas, H); }
+    window.addEventListener("resize", resize);
+    function freq() { return parseFloat(slFreq.value); }
+    // how well a fixed timing error cancels a tone of frequency f.
+    // residual amplitude of sin - sin(shifted) = 2*sin(pi*f*err)
+    function residualFrac() {
+      return clamp(Math.abs(2 * Math.sin(Math.PI * freq() * TIMING_ERR)), 0, 1);
+    }
+    function residualFn(t) {
+      return 0.4 * (Math.sin(TAU * freq() * t) - Math.sin(TAU * freq() * (t - TIMING_ERR)));
+    }
+    function rebuild() {
+      const c = AE.ctx; if (!c || !playing) return;
+      if (node) { try { node.stop(); } catch (e) {} node.disconnect(); }
+      const buf = loopBuffer(c, freq(), residualFn);
+      node = c.createBufferSource(); node.buffer = buf; node.loop = true;
+      node.connect(gain); node.start();
+    }
+    function start() {
+      const c = AE.ensure(); if (!c) return;
+      gain = c.createGain(); gain.gain.value = 0.9; gain.connect(AE.master);
+      playing = true; rebuild();
+      btn.classList.add("playing"); btn.textContent = "■ stop";
+    }
+    function stop() {
+      if (node) { try { node.stop(); } catch (e) {} node.disconnect(); node = null; }
+      playing = false;
+      btn.classList.remove("playing"); btn.textContent = "▶ play with cancellation";
+    }
+    btn.addEventListener("click", () => { if (playing) stop(); else start(); });
+    slFreq.addEventListener("input", () => { stFreq.textContent = freq() + " Hz"; rebuild(); updateEff(); });
+    function updateEff() {
+      const r = residualFrac();
+      if (r < 0.2) { stEff.textContent = "strong cancellation"; stEff.className = "status good"; }
+      else if (r < 0.6) { stEff.textContent = "partial cancellation"; stEff.className = "status"; }
+      else { stEff.textContent = "barely helping"; stEff.className = "status loud"; }
+    }
+
+    function draw(ts) {
+      if (last == null) last = ts;
+      const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+      anim += dt * 1.2;
+      const ctx = view.ctx, w = view.w, midY = H * 0.46;
+      ctx.clearRect(0, 0, w, H);
+      axis(ctx, w, midY, "#eef1f4");
+      const off = anim * TAU;
+      // visual cycles scale with frequency (log-ish) so high freq looks dense
+      const cyc = clamp(2 + (freq() - 60) / 130, 2, 26);
+      const r = residualFrac();
+      // residual waveform
+      drawWave(ctx, w, midY, 44 * r + 2, u => Math.sin(u * cyc * TAU - off), "#14161a", 2.2);
+      // effectiveness bar
+      const barW = w - 32, barX = 16, barY = H - 22;
+      ctx.fillStyle = "#e7eaee"; ctx.fillRect(barX, barY, barW, 6);
+      ctx.fillStyle = r < 0.3 ? "#1f7a4d" : r < 0.7 ? "#2a6fb5" : "#b4561c";
+      ctx.fillRect(barX, barY, barW * (1 - r), 6);
+      ctx.font = "12px -apple-system, system-ui, sans-serif"; ctx.fillStyle = "#565d64";
+      ctx.textAlign = "left"; ctx.fillText("noise removed", barX, barY - 6);
+      ctx.textAlign = "right"; ctx.fillText(Math.round((1 - r) * 100) + "%", barX + barW, barY - 6);
+      requestAnimationFrame(draw);
+    }
+    stFreq.textContent = freq() + " Hz";
+    updateEff();
+    requestAnimationFrame(draw);
+  })();
+
+})();
+</script>
+</body>
+</html>
