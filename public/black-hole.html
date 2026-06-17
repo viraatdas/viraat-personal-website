@@ -65,7 +65,7 @@
       <div class="meta">An interactive explainer · drag to orbit, these scenes are real 3D</div>
     </header>
 
-    <p class="lead">A black hole is the one object in the universe that light cannot leave. We always describe it in terms of what falls in, but the clearest way to understand one is to follow light as it approaches, and watch the moment it runs out of options. Below is a real black hole rendered live, with the light bent exactly the way gravity bends it. Drag to fly around it.</p>
+    <p class="lead">A black hole is not a cosmic drain. It is a place where the geometry gets so steep that light runs out of legal directions. The cleanest way to see that is to follow the light itself, right up to the moment it has no route home.</p>
 
     <figure>
       <div class="fig-canvas-wrap"><canvas id="cv-lens"></canvas><div class="hint">drag to orbit</div></div>
@@ -78,7 +78,7 @@
 
     <h2>Gravity bends light</h2>
 
-    <p>Light travels in straight lines, until it does not. Mass curves the space around it, and light simply follows that curve. Near anything heavy, a passing ray gets nudged off course. Near a black hole, where the curving becomes extreme, that nudge turns into a hairpin, a loop, or a one way trip.</p>
+    <p>Light travels in straight lines through the space it is given. Mass bends that space. Far from a star the bend is a tiny correction; near a black hole the correction becomes the whole story. A ray can glance away, whip around in a hairpin, loop near the photon sphere, or disappear through the horizon.</p>
 
     <p>Here is a single ray on its own. The black disk is the <strong>event horizon</strong>, the point of no return. Aim the ray closer or farther from the center and watch how hard it bends. Orbit around to see the path curve through 3D space.</p>
 
@@ -89,7 +89,7 @@
         <span class="status" id="st-ray">deflected, escapes</span>
         <label class="switch"><input type="checkbox" id="ck-sound-bh" checked> sound</label>
       </div>
-      <figcaption>Aim wide and the ray barely bends. Aim closer and the bend grows. There is a knife edge aim where the ray neither escapes nor falls in: it loops. That radius is the photon sphere.</figcaption>
+      <figcaption>Aim wide and the ray barely bends. Aim closer and the bend grows. The warped grid is only a guide, but it makes the point visible: close to the hole, a small change in aim completely rewrites the path.</figcaption>
     </figure>
 
     <h2>The photon sphere</h2>
@@ -255,6 +255,7 @@ function primeIdleOrbit(controls, canvas, speed) {
 
       vec3 color = vec3(0.0);
       float transmit = 1.0;
+      float minR = 1000.0;
       bool ended = false;
 
       for(int i=0;i<200;i++){
@@ -265,6 +266,7 @@ function primeIdleOrbit(controls, canvas, speed) {
         dir += accel * step;
         pos += dir * step;
         float r2 = length(pos);
+        minR = min(minR, r2);
         if(r2 < RS){ ended = true; break; }                 // horizon: pure black
         if(prev.y * pos.y < 0.0){                            // crossed equatorial plane
           float f = prev.y / (prev.y - pos.y);
@@ -283,6 +285,10 @@ function primeIdleOrbit(controls, canvas, speed) {
       }
       if(!ended) color += transmit * starfield(dir);
 
+      float photonRing = exp(-pow((minR - 1.55) * 5.6, 2.0));
+      float ringFlicker = 0.72 + 0.18*sin(uTime*2.4 + atan(uv.y, uv.x)*6.0);
+      color += vec3(1.0,0.66,0.27) * photonRing * ringFlicker * diskBright * 0.26;
+      color += vec3(0.22,0.42,0.95) * photonRing * 0.035;
       color += vec3(0.025,0.02,0.04) * smoothstep(0.35, 1.4, length(uv));
       color = color / (color + vec3(0.82));   // tone map
       color = pow(color, vec3(0.4545));
@@ -374,6 +380,11 @@ function primeIdleOrbit(controls, canvas, speed) {
   // event horizon
   const horizon = new THREE.Mesh(new THREE.SphereGeometry(SC, 48, 32), new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 1, metalness: 0 }));
   scene.add(horizon);
+  const horizonGlow = new THREE.Mesh(
+    new THREE.SphereGeometry(1.12 * SC, 64, 32),
+    new THREE.MeshBasicMaterial({ color: 0xe0772f, transparent: true, opacity: 0.13, blending: THREE.AdditiveBlending, depthWrite: false })
+  );
+  scene.add(horizonGlow);
   // photon sphere (faint)
   const ps = new THREE.Mesh(new THREE.SphereGeometry(1.5 * SC, 48, 32), new THREE.MeshBasicMaterial({ color: 0xd9b94a, wireframe: true, transparent: true, opacity: 0.10 }));
   scene.add(ps);
@@ -398,6 +409,42 @@ function primeIdleOrbit(controls, canvas, speed) {
     g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xaab4c8, size: 0.35, sizeAttenuation: true })));
   })();
+
+  function makeGravityGrid() {
+    const group = new THREE.Group();
+    function wellY(r) { return -1.08 - 1.15 / (0.38 + r * 0.72); }
+    for (let r = 1.7; r <= 8.9; r += 0.72) {
+      const pts = [];
+      for (let j = 0; j <= 160; j++) {
+        const th = j / 160 * TAU;
+        pts.push(new THREE.Vector3(Math.cos(th) * r, wellY(r), Math.sin(th) * r));
+      }
+      const opacity = 0.09 + (1 - Math.min(1, r / 9)) * 0.12;
+      const line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color: 0x344760, transparent: true, opacity, depthWrite: false })
+      );
+      line.userData.baseOpacity = opacity;
+      group.add(line);
+    }
+    for (let k = 0; k < 24; k++) {
+      const th = k / 24 * TAU;
+      const pts = [];
+      for (let j = 0; j <= 80; j++) {
+        const r = 1.7 + j / 80 * 7.2;
+        pts.push(new THREE.Vector3(Math.cos(th) * r, wellY(r), Math.sin(th) * r));
+      }
+      const line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color: 0x26344a, transparent: true, opacity: 0.11, depthWrite: false })
+      );
+      line.userData.baseOpacity = 0.11;
+      group.add(line);
+    }
+    return group;
+  }
+  const gravityGrid = makeGravityGrid();
+  scene.add(gravityGrid);
 
   // geodesic integrator: d2u/dphi2 = -u + 1.5 u^2 ; returns array of THREE.Vector3 (x,0,z)
   function photonPath(b) {
@@ -429,10 +476,11 @@ function primeIdleOrbit(controls, canvas, speed) {
   dotMesh.add(new THREE.PointLight(0xffffff, 1.2, 7));
   scene.add(dotMesh);
   const trailDots = [];
-  for (let i = 0; i < 9; i++) {
+  const TRAIL_COUNT = 14;
+  for (let i = 0; i < TRAIL_COUNT; i++) {
     const m = new THREE.Mesh(
-      new THREE.SphereGeometry(0.09 - i * 0.004, 12, 12),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.34 * (1 - i / 9), blending: THREE.AdditiveBlending, depthWrite: false })
+      new THREE.SphereGeometry(Math.max(0.035, 0.095 - i * 0.0045), 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.34 * (1 - i / TRAIL_COUNT), blending: THREE.AdditiveBlending, depthWrite: false })
     );
     scene.add(m);
     trailDots.push(m);
@@ -495,6 +543,12 @@ function primeIdleOrbit(controls, canvas, speed) {
     const halo = reduceMotion ? 0.5 : 0.42 + 0.18 * Math.sin(ts * 0.004);
     ps.material.opacity = lastResult === "orbiting" ? halo * 0.55 : 0.10;
     psRing.material.opacity = lastResult === "orbiting" ? 0.72 + halo * 0.24 : 0.5;
+    horizonGlow.material.opacity = lastResult === "captured" ? 0.22 + halo * 0.12 : 0.12 + halo * 0.06;
+    gravityGrid.rotation.y += reduceMotion ? 0 : 0.00035;
+    for (let i = 0; i < gravityGrid.children.length; i++) {
+      const line = gravityGrid.children[i];
+      line.material.opacity = line.userData.baseOpacity * (1 + (reduceMotion ? 0 : 0.18 * Math.sin(ts * 0.002 + i * 0.37)));
+    }
     disk1.rotation.z += reduceMotion ? 0 : 0.0013;
     disk2.rotation.z -= reduceMotion ? 0 : 0.0008;
     renderer.render(scene, cam);

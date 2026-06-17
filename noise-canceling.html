@@ -68,7 +68,7 @@
       <div class="meta">An interactive explainer · turn your sound on, drag the waves to spin them</div>
     </header>
 
-    <p class="lead">Noise-canceling headphones do something that sounds impossible the first time you hear it described. They make silence by adding <em>more</em> sound. Not by blocking your ears, not by drowning the noise out, but by playing a second sound so precisely shaped that it erases the first one. This piece explains how, it shows you the sound in 3D, and it lets you hear every step.</p>
+    <p class="lead">Noise-canceling headphones do not hide the world. They argue with it. A microphone catches the pressure wave coming in, a chip flips that wave upside down, and the speaker fires the mirror image into your ear before the noise arrives.</p>
 
     <p class="note">The figures play audio and render live 3D. Find a comfortable volume, then start pressing play and dragging the waves around.</p>
 
@@ -105,9 +105,9 @@
 
     <h2>So: listen, flip, play it back</h2>
 
-    <p>That is the entire trick. A noise-canceling headphone is a little machine bolted to the side of your head that does three things, thousands of times a second. A tiny <strong>microphone</strong> on the outside listens to the noise heading for your ear. A chip <strong>flips</strong> that noise upside down, turning every push into a pull. And a <strong>speaker</strong> on the inside plays the flipped version, the <em>anti-noise</em>, right next to your eardrum. The two add up and cancel. You are left with the quiet.</p>
+    <p>That is the entire trick. A noise-canceling headphone is a timing machine bolted to the side of your head. A tiny <strong>microphone</strong> outside hears the noise first. A chip <strong>flips</strong> it, turning every push into a pull. The inside <strong>speaker</strong> plays that flipped pressure wave beside your eardrum, and the two pressures add to nearly nothing.</p>
 
-    <p>Below is a droning engine hum. Press play to suffer through it, then switch the cancellation on. The anti-noise floods in, the surface at your eardrum collapses toward flat, and the drone falls away.</p>
+    <p>Below is a droning engine hum. Press play, then switch cancellation on. Watch the outside microphone pick up the incoming wave, the signal race through the chip, and the eardrum surface collapse toward flat as the drone falls away.</p>
 
     <figure>
       <div class="fig-canvas-wrap"><canvas id="cv-anc"></canvas><div class="hint">drag to rotate</div></div>
@@ -117,7 +117,7 @@
         <div class="ctrl"><label for="sl-match">accuracy</label><input type="range" id="sl-match" min="0" max="1" step="0.01" value="1"></div>
         <span class="status" id="st-anc">noise only</span>
       </div>
-      <figcaption>The surface here is what is left at your eardrum. With cancellation off it is the full engine hum. Switch it on and it nearly flattens. Drop the accuracy and the cancellation gets sloppy, because real microphones and speakers are never perfect.</figcaption>
+      <figcaption>The surface here is what is left at your eardrum. With cancellation off it is the full engine hum. Switch it on and the anti-noise line fights the orange noise line until the green residual nearly vanishes. Drop the accuracy and the eardrum starts moving again.</figcaption>
     </figure>
 
     <h2>Why it only kills the hum</h2>
@@ -348,6 +348,107 @@ function makeSurface(canvas, height, opts) {
   return { renderer, scene, cam, controls, update, render: () => renderer.render(scene, cam), SIZE };
 }
 
+function makeAncDevice(scene) {
+  const group = new THREE.Group();
+  scene.add(group);
+
+  const shellMat = new THREE.MeshStandardMaterial({ color: 0x151b26, metalness: 0.35, roughness: 0.42 });
+  const cushionMat = new THREE.MeshStandardMaterial({ color: 0x05070b, metalness: 0.05, roughness: 0.82 });
+  const cyanMat = new THREE.MeshBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.48, blending: THREE.AdditiveBlending, depthWrite: false });
+  const amberMat = new THREE.MeshBasicMaterial({ color: 0xe0883f, transparent: true, opacity: 0.36, blending: THREE.AdditiveBlending, depthWrite: false });
+
+  const cup = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.055, 18, 80), shellMat);
+  cup.position.set(0, 0.42, 3.62);
+  group.add(cup);
+  const cushion = new THREE.Mesh(new THREE.TorusGeometry(0.57, 0.11, 18, 80), cushionMat);
+  cushion.position.copy(cup.position);
+  group.add(cushion);
+  const speaker = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.027, 10, 48), cyanMat.clone());
+  speaker.position.set(0, 0.42, 3.18);
+  group.add(speaker);
+  const drum = new THREE.Mesh(
+    new THREE.CircleGeometry(0.41, 64),
+    new THREE.MeshStandardMaterial({ color: 0xdfe7ef, roughness: 0.38, metalness: 0.05, transparent: true, opacity: 0.52, side: THREE.DoubleSide })
+  );
+  drum.position.set(0, 0.42, 3.58);
+  group.add(drum);
+
+  const mic = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 20), new THREE.MeshStandardMaterial({ color: 0xe7edf5, roughness: 0.28, metalness: 0.6 }));
+  mic.position.set(-2.9, 0.72, -3.28);
+  group.add(mic);
+  const micRing = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.012, 8, 48), amberMat.clone());
+  micRing.position.copy(mic.position);
+  group.add(micRing);
+
+  const chip = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.28, 0.42), new THREE.MeshStandardMaterial({ color: 0x223044, emissive: 0x103c5a, emissiveIntensity: 0.2, roughness: 0.45, metalness: 0.2 }));
+  chip.position.set(-2.45, 1.18, 0.15);
+  group.add(chip);
+  const chipTrace = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.02, 0.52), new THREE.MeshBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.35 }));
+  chipTrace.position.copy(chip.position);
+  chipTrace.position.y += 0.155;
+  group.add(chipTrace);
+
+  function curveLine(points, color, opacity) {
+    const curve = new THREE.CatmullRomCurve3(points);
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(curve.getPoints(64)),
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity })
+    );
+    line.frustumCulled = false;
+    group.add(line);
+    return { curve, line };
+  }
+
+  const listenPath = curveLine([mic.position.clone(), new THREE.Vector3(-2.9, 1.28, -1.7), chip.position.clone()], 0xe0883f, 0.45);
+  const antiPath = curveLine([chip.position.clone(), new THREE.Vector3(-1.5, 1.22, 1.82), speaker.position.clone()], 0x57b8e0, 0.18);
+  const dots = [];
+  [listenPath, antiPath].forEach((path, pathIndex) => {
+    for (let i = 0; i < 3; i++) {
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), (pathIndex ? cyanMat : amberMat).clone());
+      group.add(dot);
+      dots.push({ dot, path, offset: i / 3, pathIndex });
+    }
+  });
+
+  const speakerPulse = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.013, 8, 64), cyanMat.clone());
+  speakerPulse.position.copy(speaker.position);
+  group.add(speakerPulse);
+
+  return {
+    update(t, residual, on, accuracy) {
+      const motion = clamp(Math.abs(residual) * 1.7, 0, 1.25);
+      drum.position.z = 3.58 + residual * 0.16;
+      drum.scale.setScalar(1 + motion * 0.1);
+      drum.material.opacity = 0.38 + motion * 0.3;
+
+      const micPulse = reduceMotion ? 0 : 0.5 + 0.5 * Math.sin(t * 5.4);
+      micRing.scale.setScalar(1.0 + motion * 0.5 + micPulse * 0.22);
+      micRing.material.opacity = 0.18 + motion * 0.38;
+
+      antiPath.line.material.opacity = on ? 0.58 : 0.12;
+      listenPath.line.material.opacity = 0.42 + motion * 0.22;
+      chip.material.emissiveIntensity = on ? 0.42 + accuracy * 0.32 : 0.12;
+      chipTrace.material.opacity = on ? 0.42 + accuracy * 0.28 : 0.16;
+
+      const pulse = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(t * 6.2);
+      speakerPulse.visible = on;
+      speakerPulse.scale.setScalar(1.0 + pulse * 0.72);
+      speakerPulse.material.opacity = on ? 0.16 + accuracy * 0.32 * (1 - pulse * 0.45) : 0;
+      speaker.material.opacity = on ? 0.45 + accuracy * 0.35 : 0.18;
+
+      for (const item of dots) {
+        const enabled = item.pathIndex === 0 || on;
+        item.dot.visible = enabled && !reduceMotion;
+        if (!enabled) continue;
+        const speed = item.pathIndex === 0 ? 0.62 : 0.88;
+        const u = (t * speed + item.offset) % 1;
+        item.path.curve.getPointAt(u, item.dot.position);
+        item.dot.material.opacity = item.pathIndex === 0 ? 0.32 + motion * 0.28 : 0.28 + accuracy * 0.42;
+      }
+    }
+  };
+}
+
 // =========================================================
 // FIGURE 1: single wave + tone
 // =========================================================
@@ -459,6 +560,7 @@ function makeSurface(canvas, height, opts) {
       return [noise, anti, noise + anti];
     }
   });
+  const device = makeAncDevice(S.scene);
   const F = 110;
   const harm = [[1, 1.0], [2, 0.45], [3, 0.25]];
   let node = null, gain = null, playing = false, t = 0, last = null;
@@ -489,7 +591,10 @@ function makeSurface(canvas, height, opts) {
     else { stAnc.textContent = "leaking through"; stAnc.className = "status loud"; }
   }
 
-  runFigureLoop(canvas, ts => { if (last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts; t += dt; S.controls.update(); S.update(t); S.render(); });
+  runFigureLoop(canvas, ts => {
+    if (last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts; t += dt;
+    S.controls.update(); S.update(t); device.update(t, height(0, 0, t), ckAnc.checked, match()); S.render();
+  });
   upd();
 })();
 </script>

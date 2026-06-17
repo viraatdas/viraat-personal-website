@@ -83,9 +83,9 @@
       <div class="meta">An interactive explainer · the figures are real 3D, drag to spin them</div>
     </header>
 
-    <p class="lead">A lock is a tiny machine with exactly one job: stay shut until the right key shows up. It feels solid and secret. But the thing inside the most common lock in the world, the <strong>pin tumbler</strong>, is simple enough to understand in an afternoon. And with a little patience, simple enough to open without its key.</p>
+    <p class="lead">A pin tumbler lock feels like a sealed little secret. It is not. It is a row of brass pins, a spring over each one, and one brutally simple rule: the plug turns only when every gap lines up at the same height.</p>
 
-    <p>Every figure below is a live 3D model. Drag to rotate it, use the controls, and look at it from any angle. Let's start by cutting one open.</p>
+    <p>The trick is seeing that rule as a machine instead of a diagram. Every figure below is live 3D, with real moving parts you can rotate, lift, jam, and set. Let's cut the lock open first.</p>
 
     <h2>What's inside a lock</h2>
 
@@ -128,13 +128,13 @@
 
     <h2>Single pin picking</h2>
 
-    <p>This is the elegant way to open a lock, and once you understand binding it almost explains itself.</p>
+    <p>This is the elegant way to open a lock. Once you understand binding, the whole move becomes physical: find the pin carrying the torque, lift it until it clicks, then let the lock choose the next one.</p>
 
     <p>You hold light tension with a small wrench in the bottom of the keyway. That makes exactly one pin bind. You find that pin with a pick and push it up. The instant its gap reaches the shear line, the driver pin gets shoved up into the housing. And because the plug is already under tension, it rotates that tiny fraction further. Now there's a microscopic <strong>ledge</strong> of plug sitting under the driver pin, holding it up. The pin is <strong>set</strong>. It won't fall back.</p>
 
     <p>With the first pin set, the plug has turned a hair more, which makes the <em>next</em> least-aligned pin bind. You find it, set it, the plug creeps further. Set all five and the whole thing swings open.</p>
 
-    <p class="note">Turn on tension, then drag the <strong>glowing</strong> binding pin straight up to the shear line. Push the wrong one and nothing catches, so feel for the binding pin. Drag empty space to spin the lock, and turn your sound on to hear each pin click home.</p>
+    <p class="note">Turn on tension, then drag the <strong>glowing</strong> binding pin straight up to the shear line. The right pin flashes and lands on a tiny ledge; the wrong pin snaps back. Drag empty space to spin the lock, and turn your sound on to hear each pin click home.</p>
 
     <figure>
       <div class="fig-canvas-wrap"><canvas id="cv-spp"></canvas><div class="hint">drag a pin up · drag empty space to rotate</div></div>
@@ -611,6 +611,61 @@ function setCutaway(lock, on) {
   wrench.visible = false;
   lock.plugGroup.add(wrench);
 
+  const ledges = [], clickRings = [], bindRings = [];
+  const ledgeGeo = new THREE.BoxGeometry(0.5, 0.035, 0.78);
+  const clickGeo = new THREE.TorusGeometry(0.34, 0.015, 8, 48);
+  const bindGeo = new THREE.TorusGeometry(0.29, 0.012, 8, 48);
+  for (let i = 0; i < N; i++) {
+    const ledge = new THREE.Mesh(
+      ledgeGeo,
+      new THREE.MeshStandardMaterial({
+        color: 0xd8a246,
+        emissive: 0x8a4b12,
+        emissiveIntensity: 0.2,
+        metalness: 0.72,
+        roughness: 0.28,
+        transparent: true,
+        opacity: 0
+      })
+    );
+    ledge.position.set(XS[i], SHEAR - 0.035, 0);
+    ledge.visible = false;
+    lock.plugGroup.add(ledge);
+    ledges.push(ledge);
+
+    const ring = new THREE.Mesh(
+      clickGeo,
+      new THREE.MeshBasicMaterial({
+        color: 0xffc46f,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(XS[i], SHEAR, 0);
+    ring.visible = false;
+    lock.group.add(ring);
+    clickRings.push(ring);
+
+    const bindRing = new THREE.Mesh(
+      bindGeo,
+      new THREE.MeshBasicMaterial({
+        color: 0xe0772f,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    bindRing.rotation.x = Math.PI / 2;
+    bindRing.position.set(XS[i], SHEAR - 0.01, 0);
+    bindRing.visible = false;
+    lock.group.add(bindRing);
+    bindRings.push(bindRing);
+  }
+
   // fat invisible grab proxies so each pin column is easy to grab and drag
   const proxies = [];
   for (let i = 0; i < N; i++) {
@@ -701,9 +756,9 @@ function setCutaway(lock, on) {
   canvas.addEventListener("pointerup", endDrag);
   canvas.addEventListener("pointercancel", endDrag);
 
-  ckTension.addEventListener("change", () => Sound.ensure());
+  ckTension.addEventListener("change", () => { Sound.ensure(); update(performance.now()); });
   ckSound.addEventListener("change", () => { Sound.enabled = ckSound.checked; Sound.ensure(); });
-  btReset.addEventListener("click", () => { ckTension.checked = false; fig.controls.enabled = true; init(); });
+  btReset.addEventListener("click", () => { ckTension.checked = false; fig.controls.enabled = true; init(); update(performance.now()); });
 
   function update(ts) {
     const b = binding();
@@ -731,6 +786,29 @@ function setCutaway(lock, on) {
       else { dm.emissiveIntensity = 0; }
     }
     layoutPins(lock, lifts, setFlags);
+
+    for (let i = 0; i < N; i++) {
+      const flash = setPulse[i];
+      const ledge = ledges[i];
+      ledge.visible = setFlags[i] || flash > 0.02;
+      ledge.material.opacity = setFlags[i] ? 0.46 : flash * 0.52;
+      ledge.material.emissiveIntensity = setFlags[i] ? 0.18 : flash * 0.72;
+
+      const ring = clickRings[i];
+      ring.visible = flash > 0.02;
+      ring.material.opacity = flash * 0.58;
+      ring.scale.setScalar(1.0 + (1 - flash) * 0.75);
+
+      const bindRing = bindRings[i];
+      const isCurrentBind = i === b && ckTension.checked && !opened;
+      bindRing.visible = isCurrentBind;
+      bindRing.material.opacity = isCurrentBind ? 0.32 + 0.2 * Math.sin(ts * 0.008) : 0;
+      bindRing.scale.setScalar(isCurrentBind ? 1.0 + 0.06 * Math.sin(ts * 0.01) : 1);
+
+      const spring = lock.springs[i].mesh;
+      const springKick = flash > 0 ? Math.sin((1 - flash) * Math.PI * 5) * flash * 0.16 : 0;
+      spring.rotation.z = reduceMotion ? 0 : springKick + (active === i ? Math.sin(ts * 0.024 + i) * 0.055 : 0);
+    }
 
     const guidePin = active >= 0 ? active : b;
     pickTool.visible = ckTension.checked && guidePin >= 0 && !opened;
