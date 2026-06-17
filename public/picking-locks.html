@@ -900,6 +900,12 @@ function setCutaway(lock, on) {
       const isBind = (i === b);
       const km = lock.keyPins[i].body.material;
       const dm = lock.driverPins[i].mesh.material;
+      const liftRatio = clamp(lifts[i] / Math.max(0.001, lock.keyPins[i].bit + 0.18), 0, 1);
+      const wedge = isBind && ckTension.checked && !opened
+        ? 0.018 + liftRatio * 0.026 + (reduceMotion ? 0 : 0.004 * Math.sin(ts * 0.027 + i))
+        : (setFlags[i] ? 0.003 : 0);
+      lock.keyPins[i].grp.rotation.z += (wedge - lock.keyPins[i].grp.rotation.z) * 0.35;
+      lock.driverPins[i].mesh.rotation.z += (wedge * 0.7 - lock.driverPins[i].mesh.rotation.z) * 0.35;
       if (isBind) { km.emissive.setHex(0xe0772f); km.emissiveIntensity = 0.45 + 0.28 * Math.sin(ts * 0.008); }
       else { km.emissiveIntensity = 0; }
       if (setFlags[i]) { dm.emissive.setHex(0x2f9e63); dm.emissiveIntensity = 0.4; }

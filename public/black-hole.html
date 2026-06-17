@@ -419,6 +419,9 @@ function primeIdleOrbit(controls, canvas, speed) {
   const gasCool = new THREE.Color(0xe0772f);
   const gasColor = new THREE.Color();
   const gasBeads = [];
+  const gasStreaks = [];
+  const gasUp = new THREE.Vector3(0, 1, 0);
+  const gasTangent = new THREE.Vector3();
   let gasSeed = 11;
   function gasRand() { gasSeed = (gasSeed * 1664525 + 1013904223) >>> 0; return gasSeed / 0xffffffff; }
   for (let i = 0; i < 58; i++) {
@@ -436,6 +439,22 @@ function primeIdleOrbit(controls, canvas, speed) {
     };
     scene.add(bead);
     gasBeads.push(bead);
+  }
+  for (let i = 0; i < 24; i++) {
+    const streak = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.012, 0.018, 0.18 + gasRand() * 0.18, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffb25d, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    streak.userData = {
+      r: (1.7 + gasRand() * 1.05) * SC,
+      a: gasRand() * TAU,
+      speed: 0.0007 + gasRand() * 0.0009,
+      lift: (gasRand() - 0.5) * 0.05,
+      base: 0.12 + gasRand() * 0.2,
+      stretch: 0.9 + gasRand() * 1.4
+    };
+    scene.add(streak);
+    gasStreaks.push(streak);
   }
   const echoRings = [];
   for (const [radius, opacity, tilt] of [[1.48, 0.16, 0.0], [1.62, 0.12, 0.18], [1.82, 0.08, -0.16]]) {
@@ -660,6 +679,18 @@ function primeIdleOrbit(controls, canvas, speed) {
       bead.material.color.copy(gasColor);
       bead.material.opacity = bead.userData.base * (0.34 + doppler * 0.9) * (lastResult === "captured" ? 1.18 : 1);
       bead.scale.setScalar(bead.userData.size * (0.85 + doppler * 0.46));
+    }
+    for (const streak of gasStreaks) {
+      const a = streak.userData.a + ts * streak.userData.speed;
+      const r = streak.userData.r * (1 + 0.025 * Math.sin(ts * 0.0019 + streak.userData.a * 2.1));
+      const doppler = 0.5 + 0.5 * Math.cos(a - 0.65);
+      streak.position.set(Math.cos(a) * r, streak.userData.lift + 0.02 * Math.sin(a * 3.2), Math.sin(a) * r);
+      gasTangent.set(-Math.sin(a), 0, Math.cos(a)).normalize();
+      streak.quaternion.setFromUnitVectors(gasUp, gasTangent);
+      gasColor.copy(gasCool).lerp(gasHot, Math.min(1, doppler * 1.15));
+      streak.material.color.copy(gasColor);
+      streak.material.opacity = streak.userData.base * (0.26 + doppler * 0.9) * (lastResult === "captured" ? 1.12 : 0.95);
+      streak.scale.set(1, streak.userData.stretch * (0.75 + doppler * 1.2), 1);
     }
     for (let i = 0; i < echoRings.length; i++) {
       const ring = echoRings[i];

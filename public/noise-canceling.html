@@ -378,11 +378,13 @@ function makeAncDevice(scene) {
   speaker.position.set(0, 0.42, 3.18);
   group.add(speaker);
   const drum = new THREE.Mesh(
-    new THREE.CircleGeometry(0.41, 64),
+    new THREE.CircleGeometry(0.41, 96),
     new THREE.MeshStandardMaterial({ color: 0xdfe7ef, roughness: 0.38, metalness: 0.05, transparent: true, opacity: 0.52, side: THREE.DoubleSide })
   );
   drum.position.set(0, 0.42, 3.58);
   group.add(drum);
+  const drumAttr = drum.geometry.attributes.position;
+  const drumBase = new Float32Array(drumAttr.array);
   const feedbackMic = new THREE.Mesh(new THREE.SphereGeometry(0.09, 18, 18), new THREE.MeshStandardMaterial({ color: 0x86e3b4, roughness: 0.3, metalness: 0.45 }));
   feedbackMic.position.set(0.55, 0.72, 3.44);
   group.add(feedbackMic);
@@ -491,6 +493,15 @@ function makeAncDevice(scene) {
       drum.position.z = 3.58 + residual * 0.16;
       drum.scale.setScalar(1 + motion * 0.1);
       drum.material.opacity = 0.38 + motion * 0.3;
+      for (let i = 0; i < drumAttr.count; i++) {
+        const x = drumBase[i * 3], y = drumBase[i * 3 + 1];
+        const edge = clamp(Math.sqrt(x * x + y * y) / 0.41, 0, 1);
+        const membrane = (1 - edge) ** 1.35;
+        const flutter = reduceMotion ? 0 : Math.sin(t * 12.5 + x * 26 + y * 18) * motion * 0.018 * membrane;
+        drumAttr.setZ(i, drumBase[i * 3 + 2] + residual * 0.075 * membrane + flutter);
+      }
+      drumAttr.needsUpdate = true;
+      drum.geometry.computeVertexNormals();
 
       const micPulse = reduceMotion ? 0 : 0.5 + 0.5 * Math.sin(t * 5.4);
       micRing.scale.setScalar(1.0 + motion * 0.5 + micPulse * 0.22);
