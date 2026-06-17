@@ -506,6 +506,12 @@ function primeIdleOrbit(controls, canvas, speed) {
   const dotMesh = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
   dotMesh.add(new THREE.PointLight(0xffffff, 1.2, 7));
   scene.add(dotMesh);
+  const redshiftHalo = new THREE.Mesh(
+    new THREE.SphereGeometry(0.25, 24, 16),
+    new THREE.MeshBasicMaterial({ color: 0xff5d2a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
+  );
+  redshiftHalo.visible = false;
+  scene.add(redshiftHalo);
   const trailDots = [];
   const TRAIL_COUNT = 14;
   for (let i = 0; i < TRAIL_COUNT; i++) {
@@ -579,6 +585,10 @@ function primeIdleOrbit(controls, canvas, speed) {
       dotMesh.children[0].intensity = 1.05 + redshift * 0.9;
       const pulse = reduceMotion ? 1 : 1 + 0.18 * Math.sin(ts * 0.012);
       dotMesh.scale.setScalar((lastResult === "orbiting" ? pulse : 1) * (1 + redshift * 0.35));
+      redshiftHalo.position.copy(dotMesh.position);
+      redshiftHalo.visible = redshift > 0.08 && !reduceMotion;
+      redshiftHalo.scale.setScalar(1.0 + redshift * 2.5 + 0.12 * Math.sin(ts * 0.01));
+      redshiftHalo.material.opacity = redshiftHalo.visible ? redshift * 0.32 : 0;
       for (let i = 0; i < trailDots.length; i++) {
         const tt = (dotT - (i + 1) * 0.018 + 1) % 1;
         curve.getPointAt(clamp(tt, 0, 1), trailDots[i].position);

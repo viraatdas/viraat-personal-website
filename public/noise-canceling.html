@@ -365,6 +365,7 @@ function makeAncDevice(scene) {
   const cushionMat = new THREE.MeshStandardMaterial({ color: 0x05070b, metalness: 0.05, roughness: 0.82 });
   const cyanMat = new THREE.MeshBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.48, blending: THREE.AdditiveBlending, depthWrite: false });
   const amberMat = new THREE.MeshBasicMaterial({ color: 0xe0883f, transparent: true, opacity: 0.36, blending: THREE.AdditiveBlending, depthWrite: false });
+  const greenMat = new THREE.MeshBasicMaterial({ color: 0x46c08a, transparent: true, opacity: 0.34, blending: THREE.AdditiveBlending, depthWrite: false });
 
   const cup = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.055, 18, 80), shellMat);
   cup.position.set(0, 0.42, 3.62);
@@ -381,6 +382,12 @@ function makeAncDevice(scene) {
   );
   drum.position.set(0, 0.42, 3.58);
   group.add(drum);
+  const feedbackMic = new THREE.Mesh(new THREE.SphereGeometry(0.09, 18, 18), new THREE.MeshStandardMaterial({ color: 0x86e3b4, roughness: 0.3, metalness: 0.45 }));
+  feedbackMic.position.set(0.55, 0.72, 3.44);
+  group.add(feedbackMic);
+  const feedbackRing = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.01, 8, 42), greenMat.clone());
+  feedbackRing.position.copy(feedbackMic.position);
+  group.add(feedbackRing);
 
   const mic = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 20), new THREE.MeshStandardMaterial({ color: 0xe7edf5, roughness: 0.28, metalness: 0.6 }));
   mic.position.set(-2.9, 0.72, -3.28);
@@ -440,6 +447,7 @@ function makeAncDevice(scene) {
 
   const listenPath = curveLine([mic.position.clone(), new THREE.Vector3(-2.9, 1.28, -1.7), chip.position.clone()], 0xe0883f, 0.45);
   const antiPath = curveLine([chip.position.clone(), new THREE.Vector3(-1.5, 1.22, 1.82), speaker.position.clone()], 0x57b8e0, 0.18);
+  const feedbackPath = curveLine([feedbackMic.position.clone(), new THREE.Vector3(-0.32, 1.14, 2.45), chip.position.clone()], 0x46c08a, 0.16);
   const dots = [];
   [listenPath, antiPath].forEach((path, pathIndex) => {
     for (let i = 0; i < 3; i++) {
@@ -448,6 +456,12 @@ function makeAncDevice(scene) {
       dots.push({ dot, path, offset: i / 3, pathIndex });
     }
   });
+  const feedbackDots = [];
+  for (let i = 0; i < 2; i++) {
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.046, 12, 12), greenMat.clone());
+    group.add(dot);
+    feedbackDots.push({ dot, offset: i / 2 });
+  }
 
   const speakerPulse = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.013, 8, 64), cyanMat.clone());
   speakerPulse.position.copy(speaker.position);
@@ -468,6 +482,10 @@ function makeAncDevice(scene) {
       listenPath.line.material.opacity = 0.42 + motion * 0.22;
       chip.material.emissiveIntensity = on ? 0.42 + accuracy * 0.32 : 0.12;
       chipTrace.material.opacity = on ? 0.42 + accuracy * 0.28 : 0.16;
+      const correction = on ? clamp(motion * 0.72 + (1 - accuracy) * 0.45, 0, 1) : 0;
+      feedbackPath.line.material.opacity = on ? 0.16 + correction * 0.46 : 0.06;
+      feedbackRing.scale.setScalar(1.0 + correction * 0.55 + (reduceMotion ? 0 : 0.07 * Math.sin(t * 6.7)));
+      feedbackRing.material.opacity = on ? 0.12 + correction * 0.55 : 0.08;
 
       fan.rotation.z += reduceMotion ? 0 : 0.18 + motion * 0.04;
       engineRing.scale.setScalar(1 + motion * 0.04);
@@ -492,6 +510,13 @@ function makeAncDevice(scene) {
         const u = (t * speed + item.offset) % 1;
         item.path.curve.getPointAt(u, item.dot.position);
         item.dot.material.opacity = item.pathIndex === 0 ? 0.32 + motion * 0.28 : 0.28 + accuracy * 0.42;
+      }
+      for (const item of feedbackDots) {
+        item.dot.visible = on && !reduceMotion;
+        if (!item.dot.visible) continue;
+        const u = (t * (0.78 + correction * 0.42) + item.offset) % 1;
+        feedbackPath.curve.getPointAt(u, item.dot.position);
+        item.dot.material.opacity = 0.2 + correction * 0.56;
       }
     }
   };

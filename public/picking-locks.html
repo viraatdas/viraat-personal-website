@@ -652,6 +652,18 @@ function setCutaway(lock, on) {
   torqueNeedle.visible = false;
   lock.plugGroup.add(torqueNeedle);
 
+  const loadDots = [];
+  for (let i = 0; i < 9; i++) {
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(0.035, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0xffb45a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    dot.userData.offset = i / 9;
+    dot.visible = false;
+    lock.plugGroup.add(dot);
+    loadDots.push(dot);
+  }
+
   const ledges = [], clickRings = [], bindRings = [], contactPads = [];
   const ledgeGeo = new THREE.BoxGeometry(0.5, 0.035, 0.78);
   const clickGeo = new THREE.TorusGeometry(0.34, 0.015, 8, 48);
@@ -885,6 +897,16 @@ function setCutaway(lock, on) {
     torqueNeedle.material.opacity = torqueMat.opacity + 0.08;
     torqueArc.scale.setScalar(1 + (reduceMotion ? 0 : 0.012 * Math.sin(ts * 0.014)));
     torqueNeedle.rotation.x = (opened ? -0.52 : -0.08 - sc * 0.08) + (reduceMotion ? 0 : 0.018 * Math.sin(ts * 0.013));
+    for (const dot of loadDots) {
+      const live = (ckTension.checked || opened) && !reduceMotion;
+      dot.visible = live;
+      if (!live) continue;
+      const u = (ts * 0.00055 + dot.userData.offset + sc * 0.035) % 1;
+      const a = -1.88 + u * Math.PI * 1.28;
+      dot.position.set(2.28, Math.cos(a) * RP * 0.76, Math.sin(a) * RP * 0.76);
+      dot.material.opacity = (0.16 + sc * 0.035) * (0.45 + 0.55 * Math.sin(u * Math.PI));
+      dot.scale.setScalar(0.75 + sc * 0.08 + 0.22 * Math.sin(ts * 0.008 + dot.userData.offset * Math.PI * 2));
+    }
     if (pickTool.visible) {
       const wobble = reduceMotion ? 0 : Math.sin(ts * 0.006) * 0.025;
       const targetX = XS[guidePin] - 0.08;
