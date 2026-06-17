@@ -80,12 +80,12 @@
   <div class="wrap">
     <header class="post">
       <h1>Picking Locks</h1>
-      <div class="meta">An interactive explainer · the figures are real 3D, drag to spin them</div>
+      <div class="meta">Interactive explainer · real-time 3D figures you can rotate, lift, and set</div>
     </header>
 
-    <p class="lead">A pin tumbler lock feels like a sealed little secret. It is not. It is a row of brass pins, a spring over each one, and one brutally simple rule: the plug turns only when every gap lines up at the same height.</p>
+    <p class="lead">A pin tumbler lock looks like a sealed little secret. Inside, it is just a row of brass pins, a spring over each one, and one simple rule: the plug turns only when every pin gap lines up at the same height.</p>
 
-    <p>The trick is seeing that rule as a machine instead of a diagram. Every figure below is live 3D, with real moving parts you can rotate, lift, jam, and set. Let's cut the lock open first.</p>
+    <p>The trick is seeing that rule as a machine instead of a diagram. Every figure below is live 3D, with moving parts you can rotate, lift, jam, and set. Let's cut the lock open first.</p>
 
     <h2>What's inside a lock</h2>
 
@@ -134,7 +134,7 @@
 
     <p>With the first pin set, the plug has turned a hair more, which makes the <em>next</em> least-aligned pin bind. You find it, set it, the plug creeps further. Set all five and the whole thing swings open.</p>
 
-    <p class="note">Turn on tension, then drag the <strong>glowing</strong> binding pin straight up to the shear line. The right pin flashes and lands on a tiny ledge; the wrong pin snaps back. Drag empty space to spin the lock, and turn your sound on to hear each pin click home.</p>
+    <p class="note">Turn on tension, then lift the <strong>glowing</strong> binding pin to the shear line. The right pin flashes and lands on a tiny ledge; the wrong pin snaps back. Drag empty space to spin the lock, and leave sound on if you want to hear each pin click home.</p>
 
     <figure>
       <div class="fig-canvas-wrap"><canvas id="cv-spp"></canvas><div class="hint">drag a pin up · drag empty space to rotate</div></div>
@@ -160,7 +160,7 @@
       <figcaption>Raking trades precision for chaos. The tool keeps slapping every stack upward while torque holds any pin that happens to cross the shear line at the right instant.</figcaption>
     </figure>
 
-    <p>It's fast, and it works embarrassingly often on cheap locks. It's also unreliable, and a good lock will laugh at it. Security pins, with mushroom and spool shapes that catch the ledge with a convincing fake click, exist specifically to punish both raking and careless single pin picking.</p>
+    <p>It's fast, and it works embarrassingly often on cheap locks. It's also unreliable, and a good lock will shut it down. Security pins, with mushroom and spool shapes that catch the ledge with a convincing fake click, exist specifically to punish both raking and careless single pin picking.</p>
 
     <h2>Why this is worth knowing</h2>
 
@@ -188,9 +188,21 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 // ---------------- tactile audio ----------------
 const Sound = (function () {
   let ctx = null, noise = null; const api = { enabled: true };
+  function audioAllowed() {
+    return !navigator.userActivation || navigator.userActivation.hasBeenActive;
+  }
   function ensure() {
-    if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; try { ctx = new AC(); } catch (e) { return null; } }
-    if (ctx.state === "suspended") ctx.resume(); return ctx;
+    if (!ctx) {
+      if (!audioAllowed()) return null;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try { ctx = new AC(); } catch (e) { return null; }
+    }
+    if (ctx.state === "suspended") {
+      if (!audioAllowed()) return null;
+      ctx.resume().catch(() => {});
+    }
+    return ctx;
   }
   api.ensure = ensure;
   function nbuf(c) { if (noise) return noise; const n = Math.floor(c.sampleRate * 0.05); noise = c.createBuffer(1, n, c.sampleRate); const d = noise.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; return noise; }
