@@ -395,6 +395,17 @@ function primeIdleOrbit(controls, canvas, speed) {
   disk1.rotation.x = Math.PI / 2; scene.add(disk1);
   const disk2 = new THREE.Mesh(new THREE.TorusGeometry(2.85 * SC, 0.035, 10, 160), diskMat.clone());
   disk2.material.opacity = 0.12; disk2.rotation.x = Math.PI / 2; scene.add(disk2);
+  const echoRings = [];
+  for (const [radius, opacity, tilt] of [[1.48, 0.16, 0.0], [1.62, 0.12, 0.18], [1.82, 0.08, -0.16]]) {
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(radius * SC, 0.012, 8, 160),
+      new THREE.MeshBasicMaterial({ color: 0xffb25d, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    ring.rotation.x = Math.PI / 2 + tilt;
+    ring.userData.baseOpacity = opacity;
+    scene.add(ring);
+    echoRings.push(ring);
+  }
 
   // starfield backdrop
   (function () {
@@ -544,6 +555,12 @@ function primeIdleOrbit(controls, canvas, speed) {
     ps.material.opacity = lastResult === "orbiting" ? halo * 0.55 : 0.10;
     psRing.material.opacity = lastResult === "orbiting" ? 0.72 + halo * 0.24 : 0.5;
     horizonGlow.material.opacity = lastResult === "captured" ? 0.22 + halo * 0.12 : 0.12 + halo * 0.06;
+    for (let i = 0; i < echoRings.length; i++) {
+      const ring = echoRings[i];
+      const breathing = reduceMotion ? 0 : 0.5 + 0.5 * Math.sin(ts * 0.0035 + i * 1.7);
+      ring.material.opacity = ring.userData.baseOpacity * (lastResult === "orbiting" ? 1.8 : 1.0) * (0.68 + breathing * 0.42);
+      ring.rotation.z += reduceMotion ? 0 : 0.0012 * (i % 2 ? -1 : 1);
+    }
     gravityGrid.rotation.y += reduceMotion ? 0 : 0.00035;
     for (let i = 0; i < gravityGrid.children.length; i++) {
       const line = gravityGrid.children[i];

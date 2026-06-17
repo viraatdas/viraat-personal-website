@@ -388,6 +388,36 @@ function makeAncDevice(scene) {
   chipTrace.position.y += 0.155;
   group.add(chipTrace);
 
+  const fanMat = new THREE.MeshStandardMaterial({ color: 0x303846, metalness: 0.58, roughness: 0.36 });
+  const bladeMat = new THREE.MeshStandardMaterial({ color: 0x8d9aaa, metalness: 0.42, roughness: 0.3 });
+  const engine = new THREE.Group();
+  engine.position.set(-3.42, 0.52, -3.4);
+  const engineRing = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.04, 12, 56), fanMat);
+  engine.add(engineRing);
+  const fan = new THREE.Group();
+  for (let i = 0; i < 4; i++) {
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.48, 0.018), bladeMat);
+    blade.position.y = 0.21;
+    blade.rotation.z = i * Math.PI / 2 + 0.3;
+    fan.add(blade);
+  }
+  const hub = new THREE.Mesh(new THREE.SphereGeometry(0.09, 18, 18), fanMat);
+  fan.add(hub);
+  engine.add(fan);
+  group.add(engine);
+
+  const wavefronts = [];
+  for (let i = 0; i < 4; i++) {
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.52, 0.012, 8, 80),
+      amberMat.clone()
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(-3.18, 0.04, -2.85);
+    group.add(ring);
+    wavefronts.push({ ring, offset: i / 4 });
+  }
+
   function curveLine(points, color, opacity) {
     const curve = new THREE.CatmullRomCurve3(points);
     const line = new THREE.Line(
@@ -429,6 +459,15 @@ function makeAncDevice(scene) {
       listenPath.line.material.opacity = 0.42 + motion * 0.22;
       chip.material.emissiveIntensity = on ? 0.42 + accuracy * 0.32 : 0.12;
       chipTrace.material.opacity = on ? 0.42 + accuracy * 0.28 : 0.16;
+
+      fan.rotation.z += reduceMotion ? 0 : 0.18 + motion * 0.04;
+      engineRing.scale.setScalar(1 + motion * 0.04);
+      for (const wf of wavefronts) {
+        const u = reduceMotion ? wf.offset : (t * 0.33 + wf.offset) % 1;
+        const scale = 0.8 + u * 4.5;
+        wf.ring.scale.setScalar(scale);
+        wf.ring.material.opacity = (1 - u) * (0.24 + motion * 0.18);
+      }
 
       const pulse = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(t * 6.2);
       speakerPulse.visible = on;

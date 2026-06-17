@@ -365,8 +365,22 @@ function buildLock(parent) {
   shearLine.position.set(0, SHEAR, 0);
   group.add(shearLine);
 
+  const boreMat = new THREE.MeshBasicMaterial({ color: 0x1a222d, transparent: true, opacity: 0.08, depthWrite: false, side: THREE.DoubleSide });
+  const rimMat = new THREE.MeshBasicMaterial({ color: 0x73808d, transparent: true, opacity: 0.22, depthWrite: false });
   const keyPins = [], driverPins = [], springs = [];
   for (let i = 0; i < N; i++) {
+    const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(PIN_R + 0.075, PIN_R + 0.075, CH_TOP - CH_BOTTOM + 0.18, 32, 1, true), boreMat);
+    sleeve.position.set(XS[i], (CH_TOP + CH_BOTTOM) / 2, 0);
+    sleeve.renderOrder = 3;
+    group.add(sleeve);
+    for (const y of [SHEAR, CH_TOP]) {
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(PIN_R + 0.075, 0.011, 8, 44), rimMat);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.set(XS[i], y, 0);
+      rim.renderOrder = 4;
+      group.add(rim);
+    }
+
     // key pin (steel) with conical tip, in plugGroup
     const kp = new THREE.Group();
     const body = new THREE.Mesh(G.pin, M.keyPin);
@@ -611,6 +625,23 @@ function setCutaway(lock, on) {
   wrench.visible = false;
   lock.plugGroup.add(wrench);
 
+  const torqueMat = new THREE.MeshBasicMaterial({ color: 0xffb45a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  const torqueArc = new THREE.Mesh(new THREE.TorusGeometry(RP * 1.18, 0.018, 8, 84, Math.PI * 1.25), torqueMat);
+  torqueArc.rotation.y = Math.PI / 2;
+  torqueArc.rotation.z = -Math.PI * 0.62;
+  torqueArc.position.x = 2.27;
+  torqueArc.visible = false;
+  lock.plugGroup.add(torqueArc);
+
+  const torqueNeedle = new THREE.Mesh(
+    new THREE.ConeGeometry(0.06, 0.18, 18),
+    new THREE.MeshBasicMaterial({ color: 0xffc46f, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
+  );
+  torqueNeedle.rotation.z = -Math.PI / 2;
+  torqueNeedle.position.set(2.27, RP * 0.72, RP * 0.92);
+  torqueNeedle.visible = false;
+  lock.plugGroup.add(torqueNeedle);
+
   const ledges = [], clickRings = [], bindRings = [];
   const ledgeGeo = new THREE.BoxGeometry(0.5, 0.035, 0.78);
   const clickGeo = new THREE.TorusGeometry(0.34, 0.015, 8, 48);
@@ -814,6 +845,12 @@ function setCutaway(lock, on) {
     pickTool.visible = ckTension.checked && guidePin >= 0 && !opened;
     wrench.visible = ckTension.checked || opened;
     wrench.rotation.x = (ckTension.checked || opened) ? -0.04 - sc * 0.012 + (reduceMotion ? 0 : Math.sin(ts * 0.012) * 0.006) : 0;
+    torqueArc.visible = ckTension.checked || opened;
+    torqueNeedle.visible = torqueArc.visible;
+    torqueMat.opacity = torqueArc.visible ? 0.18 + sc * 0.075 + (reduceMotion ? 0 : 0.04 * Math.sin(ts * 0.01)) : 0;
+    torqueNeedle.material.opacity = torqueMat.opacity + 0.08;
+    torqueArc.scale.setScalar(1 + (reduceMotion ? 0 : 0.012 * Math.sin(ts * 0.014)));
+    torqueNeedle.rotation.x = (opened ? -0.52 : -0.08 - sc * 0.08) + (reduceMotion ? 0 : 0.018 * Math.sin(ts * 0.013));
     if (pickTool.visible) {
       const wobble = reduceMotion ? 0 : Math.sin(ts * 0.006) * 0.025;
       const targetX = XS[guidePin] - 0.08;
