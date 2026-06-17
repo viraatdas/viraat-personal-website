@@ -4,86 +4,1035 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Interactive Blogs · Viraat Das</title>
-<meta name="description" content="Interactive, hands-on explainers by Viraat Das. Each one is a live model you can poke at.">
+<meta name="description" content="A shelf of browser-native explainers by Viraat Das: locks, noise canceling, black holes, and the small mechanisms hiding inside familiar things.">
 
 <link rel="icon" type="image/jpeg" href="/assets/personal-website-pic.jpeg">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://interactive-blogs.viraat.dev/">
 <meta property="og:title" content="Interactive Blogs · Viraat Das">
-<meta property="og:description" content="Interactive, hands-on explainers. Each one is a live model you can poke at.">
+<meta property="og:description" content="Browser-native explainers with live models you can drag, hear, bend, and break apart.">
 <meta property="og:image" content="https://viraat.dev/assets/personal-website-pic.jpeg">
 <meta property="twitter:card" content="summary_large_image">
 <meta property="twitter:title" content="Interactive Blogs · Viraat Das">
-<meta property="twitter:description" content="Interactive, hands-on explainers. Each one is a live model you can poke at.">
+<meta property="twitter:description" content="Browser-native explainers with live models you can drag, hear, bend, and break apart.">
 <meta property="twitter:image" content="https://viraat.dev/assets/personal-website-pic.jpeg">
 
 <style>
-  :root { --ink: #161719; --ink-strong: #050608; --muted: #565d64; --link: #2a6fb5; --rule: #e6e8eb; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
+  :root {
+    --paper: #f7f8f3;
+    --surface: #fffef8;
+    --ink: #17191b;
+    --ink-soft: #42484d;
+    --muted: #687176;
+    --line: #d9ded4;
+    --deep: #10151a;
+    --brass: #b46a2d;
+    --brass-dark: #6f3c1d;
+    --cyan: #217d9c;
+    --cyan-soft: #b8e3ee;
+    --violet: #5b58a7;
+    --ember: #c24f3d;
+    --moss: #3f6758;
+    --shadow: 0 22px 60px rgba(23, 25, 27, 0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--ink); background: #fff; font-size: 18px; line-height: 1.7;
-    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    min-height: 100vh;
+    color: var(--ink);
+    background:
+      linear-gradient(90deg, rgba(35, 42, 31, 0.045) 1px, transparent 1px) 0 0 / 44px 44px,
+      linear-gradient(rgba(35, 42, 31, 0.045) 1px, transparent 1px) 0 0 / 44px 44px,
+      var(--paper);
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  .wrap { max-width: 680px; margin: 0 auto; padding: 0 22px 8rem; }
-  .topnav { max-width: 680px; margin: 0 auto; padding: 1.6rem 22px 0; font-size: 14px; }
-  .topnav a { color: var(--muted); text-decoration: none; }
-  .topnav a:hover { color: var(--ink); }
-  header.page { padding: 3.2rem 0 0.6rem; }
-  header.page h1 { font-size: 40px; line-height: 1.12; letter-spacing: -0.02em; color: var(--ink-strong); font-weight: 700; }
-  header.page p { margin-top: 1rem; color: var(--muted); font-size: 18px; max-width: 30em; }
-  .list { margin-top: 2.6rem; display: flex; flex-direction: column; gap: 1rem; }
-  .card {
-    display: block; text-decoration: none; color: inherit;
-    border: 1px solid var(--rule); border-radius: 14px; padding: 1.3rem 1.4rem;
-    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-    background: #fff;
+
+  a { color: inherit; }
+  a:focus-visible, button:focus-visible {
+    outline: 3px solid rgba(33, 125, 156, 0.45);
+    outline-offset: 5px;
   }
-  .card:hover { border-color: #c9d4e2; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(20,30,50,0.08); }
-  .card .row { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
-  .card h2 { font-size: 21px; font-weight: 650; letter-spacing: -0.01em; color: var(--ink-strong); }
-  .card .tag { font-size: 12px; color: #7a818a; border: 1px solid var(--rule); border-radius: 999px; padding: 0.1rem 0.55rem; }
-  .card p { margin-top: 0.5rem; color: var(--muted); font-size: 15.5px; line-height: 1.55; }
-  .card .go { margin-top: 0.7rem; font-size: 14px; color: var(--link); font-weight: 600; }
-  footer.page { margin-top: 3rem; color: var(--muted); font-size: 14.5px; }
-  footer.page a { color: var(--link); text-decoration: none; }
-  footer.page a:hover { text-decoration: underline; }
-  @media (max-width: 560px) { body { font-size: 17px; } header.page h1 { font-size: 31px; } }
+
+  .page {
+    width: min(1120px, calc(100% - 44px));
+    margin: 0 auto;
+  }
+
+  .topnav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.2rem 0 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .topnav a {
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+
+  .topnav a:hover { border-bottom-color: currentColor; }
+  .topnav .mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .pulse {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--ember);
+    box-shadow: 0 0 0 0 rgba(194, 79, 61, 0.35);
+    animation: pulse 2.4s ease-out infinite;
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.98fr);
+    align-items: center;
+    gap: 4.5rem;
+    min-height: 690px;
+    padding: 4.4rem 0 3.2rem;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.2rem;
+    color: var(--moss);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 38px;
+    height: 1px;
+    background: currentColor;
+  }
+
+  h1 {
+    max-width: 760px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 72px;
+    line-height: 0.96;
+    letter-spacing: 0;
+    color: var(--deep);
+    font-weight: 700;
+  }
+
+  .lede {
+    max-width: 620px;
+    margin-top: 1.35rem;
+    color: var(--ink-soft);
+    font-size: 20px;
+    line-height: 1.55;
+  }
+
+  .lede a {
+    color: var(--cyan);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(33, 125, 156, 0.35);
+  }
+
+  .lede a:hover { border-bottom-color: currentColor; }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem;
+    margin-top: 2rem;
+  }
+
+  .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.72rem 1rem;
+    border: 1px solid var(--deep);
+    border-radius: 8px;
+    background: var(--deep);
+    color: #fffef8;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  }
+
+  .button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(16, 21, 26, 0.22);
+  }
+
+  .button.secondary {
+    background: rgba(255, 254, 248, 0.72);
+    color: var(--deep);
+  }
+
+  .button.secondary:hover { background: var(--surface); }
+
+  .meta-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 2.2rem;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .meta-strip span {
+    display: block;
+    padding: 0.85rem 1rem 0.85rem 0;
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+  }
+
+  .meta-strip strong {
+    display: block;
+    color: var(--ink);
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 20px;
+    letter-spacing: 0;
+  }
+
+  .lab-stage {
+    position: relative;
+    min-height: 520px;
+    border: 1px solid #1c242b;
+    border-radius: 8px;
+    overflow: hidden;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.08), transparent 42%),
+      repeating-linear-gradient(90deg, transparent 0 38px, rgba(255,255,255,0.04) 39px 40px),
+      #11181f;
+    color: #f7f8f3;
+    box-shadow: var(--shadow);
+  }
+
+  .lab-stage::before {
+    content: "";
+    position: absolute;
+    inset: 18px;
+    border: 1px solid rgba(255,255,255,0.07);
+    pointer-events: none;
+  }
+
+  .lab-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1rem 0;
+    color: rgba(247, 248, 243, 0.62);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .bench {
+    position: absolute;
+    left: 40px;
+    right: 40px;
+    bottom: 46px;
+    height: 18px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #3b2c22, #8d5b34 22%, #c98b50 50%, #5f3522 78%, #2f2521);
+    box-shadow: 0 14px 32px rgba(0,0,0,0.42);
+  }
+
+  .preview-lock-large {
+    position: absolute;
+    left: 44px;
+    bottom: 88px;
+    width: 150px;
+    height: 210px;
+  }
+
+  .lock-body {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: 0;
+    height: 104px;
+    border: 2px solid rgba(247,248,243,0.18);
+    border-radius: 8px;
+    background: linear-gradient(135deg, #513016, #c58443 52%, #77431e);
+    box-shadow: inset 0 0 22px rgba(255,255,255,0.14), 0 18px 22px rgba(0,0,0,0.32);
+  }
+
+  .shackle {
+    position: absolute;
+    left: 33px;
+    top: 12px;
+    width: 84px;
+    height: 110px;
+    border: 16px solid #b8bec1;
+    border-bottom: 0;
+    border-radius: 999px 999px 0 0;
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.35), 0 5px 16px rgba(0,0,0,0.3);
+  }
+
+  .keyhole {
+    position: absolute;
+    left: 61px;
+    bottom: 35px;
+    width: 28px;
+    height: 40px;
+    border-radius: 999px 999px 7px 7px;
+    background: #11181f;
+  }
+
+  .lock-pin {
+    position: absolute;
+    bottom: 70px;
+    width: 11px;
+    border-radius: 999px;
+    background: #f5c179;
+    box-shadow: 0 0 16px rgba(245,193,121,0.34);
+    animation: pinLift 2.6s ease-in-out infinite;
+  }
+
+  .lock-pin:nth-child(1) { left: 35px; height: 46px; animation-delay: 0s; }
+  .lock-pin:nth-child(2) { left: 59px; height: 64px; animation-delay: 0.18s; }
+  .lock-pin:nth-child(3) { left: 83px; height: 38px; animation-delay: 0.36s; }
+  .lock-pin:nth-child(4) { left: 107px; height: 56px; animation-delay: 0.54s; }
+
+  .wave-large {
+    position: absolute;
+    top: 112px;
+    right: 34px;
+    width: 250px;
+    height: 170px;
+    transform: rotate(-7deg);
+  }
+
+  .wave-large svg,
+  .wave-card svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .wave-large path,
+  .wave-card path {
+    fill: none;
+    stroke-linecap: round;
+    stroke-width: 4;
+  }
+
+  .wave-one { stroke: var(--cyan-soft); animation: waveDrift 4s linear infinite; }
+  .wave-two { stroke: #f0a05c; animation: waveDrift 4s linear infinite reverse; opacity: 0.86; }
+  .wave-sum { stroke: #fffef8; stroke-width: 2.5; stroke-dasharray: 7 9; animation: dash 2s linear infinite; opacity: 0.72; }
+
+  .black-hole-large {
+    position: absolute;
+    right: 92px;
+    bottom: 82px;
+    width: 152px;
+    height: 152px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, #020203 0 34%, transparent 35%),
+      conic-gradient(from 20deg, #191124, #d7a042, #f8e3a2, #6e59c4, #10151a, #d7a042, #191124);
+    filter: drop-shadow(0 18px 32px rgba(0,0,0,0.55));
+    animation: orbitGlow 8s linear infinite;
+  }
+
+  .black-hole-large::before {
+    content: "";
+    position: absolute;
+    inset: 43px;
+    border-radius: 50%;
+    background: #020203;
+    box-shadow: 0 0 25px 8px rgba(0,0,0,0.92);
+  }
+
+  .black-hole-large::after {
+    content: "";
+    position: absolute;
+    left: -24px;
+    right: -24px;
+    top: 63px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, transparent, #8551b1 18%, #ffe39a 45%, #e46636 58%, transparent);
+    transform: rotate(-10deg);
+    filter: blur(0.2px);
+    animation: accretion 3.8s ease-in-out infinite;
+  }
+
+  .rail-note {
+    position: absolute;
+    left: 44px;
+    right: 44px;
+    top: 62px;
+    color: rgba(247,248,243,0.78);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin: 1.5rem 0 1.1rem;
+    padding-top: 1.8rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .section-head h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 40px;
+    line-height: 1.05;
+    letter-spacing: 0;
+    color: var(--deep);
+  }
+
+  .section-head p {
+    max-width: 390px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  .essay-list {
+    display: grid;
+    gap: 1rem;
+    padding: 0 0 4rem;
+  }
+
+  .essay-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 2rem;
+    min-height: 260px;
+    padding: 1.35rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(255, 254, 248, 0.83);
+    color: var(--ink);
+    text-decoration: none;
+    box-shadow: 0 4px 0 rgba(23,25,27,0.04);
+    transition: transform 190ms ease, box-shadow 190ms ease, border-color 190ms ease, background 190ms ease;
+  }
+
+  .essay-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(16, 21, 26, 0.28);
+    background: var(--surface);
+    box-shadow: 0 18px 38px rgba(23, 25, 27, 0.12);
+  }
+
+  .essay-card::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 4px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 260ms ease;
+  }
+
+  .essay-card:hover::after,
+  .essay-card:focus-visible::after { transform: scaleX(1); }
+
+  .essay-copy {
+    position: relative;
+    z-index: 1;
+    align-self: center;
+    max-width: 650px;
+  }
+
+  .kicker {
+    color: var(--accent);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .essay-card h3 {
+    margin-top: 0.45rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 38px;
+    line-height: 1.05;
+    letter-spacing: 0;
+    color: var(--deep);
+  }
+
+  .essay-card p {
+    max-width: 610px;
+    margin-top: 0.75rem;
+    color: var(--ink-soft);
+    font-size: 16.5px;
+    line-height: 1.62;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 1.05rem;
+    list-style: none;
+  }
+
+  .chips li {
+    border: 1px solid rgba(23,25,27,0.13);
+    border-radius: 999px;
+    padding: 0.25rem 0.58rem;
+    background: rgba(255,255,255,0.55);
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.2;
+  }
+
+  .open {
+    display: inline-flex;
+    margin-top: 1.1rem;
+    color: var(--deep);
+    font-weight: 750;
+  }
+
+  .open::after {
+    content: "→";
+    margin-left: 0.45rem;
+    transition: transform 180ms ease;
+  }
+
+  .essay-card:hover .open::after { transform: translateX(4px); }
+
+  .card-preview {
+    position: relative;
+    min-height: 220px;
+    border-radius: 7px;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.12), transparent),
+      #11181f;
+    overflow: hidden;
+    align-self: stretch;
+  }
+
+  .card-preview::before {
+    content: "";
+    position: absolute;
+    inset: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .essay-lock { --accent: var(--brass); }
+  .essay-wave { --accent: var(--cyan); }
+  .essay-hole { --accent: var(--violet); }
+
+  .mini-lock {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 130px;
+    height: 146px;
+    transform: translate(-50%, -42%);
+  }
+
+  .mini-lock .body {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 0;
+    height: 76px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #6f3c1d, #d09454 54%, #75411e);
+  }
+
+  .mini-lock .arc {
+    position: absolute;
+    left: 31px;
+    top: 0;
+    width: 68px;
+    height: 86px;
+    border: 13px solid #c8cbca;
+    border-bottom: 0;
+    border-radius: 999px 999px 0 0;
+  }
+
+  .mini-lock .pin {
+    position: absolute;
+    bottom: 49px;
+    width: 10px;
+    height: 38px;
+    border-radius: 999px;
+    background: #ffd58f;
+    animation: pinLift 2.4s ease-in-out infinite;
+  }
+
+  .mini-lock .pin:nth-child(1) { left: 35px; animation-delay: 0s; }
+  .mini-lock .pin:nth-child(2) { left: 55px; height: 50px; animation-delay: 0.15s; }
+  .mini-lock .pin:nth-child(3) { left: 75px; height: 32px; animation-delay: 0.3s; }
+  .mini-lock .pin:nth-child(4) { left: 95px; height: 44px; animation-delay: 0.45s; }
+
+  .mini-key {
+    position: absolute;
+    left: 22px;
+    bottom: 31px;
+    width: 88px;
+    height: 12px;
+    border-radius: 999px 0 0 999px;
+    background: #f4d19b;
+    animation: keySlide 3s ease-in-out infinite;
+  }
+
+  .mini-key::before {
+    content: "";
+    position: absolute;
+    left: -20px;
+    top: -8px;
+    width: 27px;
+    height: 27px;
+    border: 6px solid #f4d19b;
+    border-radius: 50%;
+  }
+
+  .wave-card {
+    position: absolute;
+    inset: 27px 20px 18px;
+  }
+
+  .wave-card .baseline {
+    position: absolute;
+    left: 7px;
+    right: 7px;
+    top: 50%;
+    border-top: 1px dashed rgba(255,255,255,0.22);
+  }
+
+  .speaker {
+    position: absolute;
+    right: 25px;
+    bottom: 24px;
+    width: 42px;
+    height: 58px;
+    border: 2px solid rgba(184, 227, 238, 0.5);
+    border-radius: 22px;
+  }
+
+  .speaker::after {
+    content: "";
+    position: absolute;
+    inset: 14px 10px;
+    border-radius: 50%;
+    background: rgba(184, 227, 238, 0.38);
+    animation: speakerPulse 1.4s ease-in-out infinite;
+  }
+
+  .mini-hole {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 146px;
+    height: 146px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at center, #000 0 32%, transparent 33%),
+      conic-gradient(from 120deg, #1d1738, #9a6fe0, #f5c567, #e46737, #0e1420, #9a6fe0, #1d1738);
+    animation: miniOrbitGlow 7s linear infinite;
+  }
+
+  .mini-hole::before {
+    content: "";
+    position: absolute;
+    inset: 41px;
+    border-radius: 50%;
+    background: #000;
+    box-shadow: 0 0 23px 10px rgba(0,0,0,0.88);
+  }
+
+  .mini-hole::after {
+    content: "";
+    position: absolute;
+    left: -25px;
+    right: -25px;
+    top: 59px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, transparent, #8661e0 18%, #fff0b0 48%, #e46737 62%, transparent);
+    transform: rotate(-9deg);
+    animation: accretion 3.5s ease-in-out infinite;
+  }
+
+  .orbit-line {
+    position: absolute;
+    left: 39px;
+    top: 48px;
+    width: 180px;
+    height: 112px;
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 50%;
+    transform: rotate(-21deg);
+  }
+
+  .orbit-dot {
+    position: absolute;
+    left: 130px;
+    top: 44px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff4b8;
+    box-shadow: 0 0 18px #fff4b8;
+    animation: dotOrbit 3.4s linear infinite;
+  }
+
+  .notes {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 1.4rem;
+    padding: 0 0 5.4rem;
+  }
+
+  .notes h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 34px;
+    line-height: 1.08;
+    letter-spacing: 0;
+  }
+
+  .notes p {
+    color: var(--ink-soft);
+    font-size: 16px;
+  }
+
+  .queue {
+    display: grid;
+    gap: 0.75rem;
+    list-style: none;
+  }
+
+  .queue li {
+    display: grid;
+    grid-template-columns: 108px 1fr;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .queue span {
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .queue strong {
+    display: block;
+    color: var(--deep);
+    font-size: 17px;
+  }
+
+  footer {
+    padding: 2rem 0 4rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 14.5px;
+  }
+
+  footer a {
+    color: var(--cyan);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(33, 125, 156, 0.35);
+  }
+
+  footer a:hover { border-bottom-color: currentColor; }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(194, 79, 61, 0.35); }
+    70% { box-shadow: 0 0 0 12px rgba(194, 79, 61, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(194, 79, 61, 0); }
+  }
+
+  @keyframes pinLift {
+    0%, 100% { transform: translateY(10px); opacity: 0.72; }
+    45%, 58% { transform: translateY(-15px); opacity: 1; }
+  }
+
+  @keyframes keySlide {
+    0%, 18%, 100% { transform: translateX(-34px); }
+    42%, 76% { transform: translateX(12px); }
+  }
+
+  @keyframes waveDrift {
+    0% { stroke-dasharray: 16 11; stroke-dashoffset: 0; transform: translateX(0); }
+    100% { stroke-dasharray: 16 11; stroke-dashoffset: -80; transform: translateX(8px); }
+  }
+
+  @keyframes dash {
+    to { stroke-dashoffset: -32; }
+  }
+
+  @keyframes speakerPulse {
+    0%, 100% { transform: scale(0.78); opacity: 0.35; }
+    50% { transform: scale(1.08); opacity: 0.88; }
+  }
+
+  @keyframes orbitGlow {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes miniOrbitGlow {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  @keyframes accretion {
+    0%, 100% { opacity: 0.76; transform: rotate(-10deg) scaleX(0.92); }
+    50% { opacity: 1; transform: rotate(-10deg) scaleX(1.08); }
+  }
+
+  @keyframes dotOrbit {
+    0% { transform: rotate(0deg) translateX(76px) rotate(0deg); }
+    100% { transform: rotate(360deg) translateX(76px) rotate(-360deg); }
+  }
+
+  @media (max-width: 940px) {
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+      min-height: auto;
+      padding-top: 3.8rem;
+    }
+
+    h1 { font-size: 58px; }
+    .lab-stage { min-height: 430px; }
+    .wave-large { right: 20px; width: 220px; }
+    .black-hole-large { right: 62px; }
+    .essay-card { grid-template-columns: 1fr; }
+    .card-preview { min-height: 210px; }
+    .notes { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; overflow-x: hidden; }
+    .page {
+      width: calc(100vw - 28px);
+      max-width: 1120px;
+    }
+    .topnav { align-items: flex-start; }
+    .topnav .mark { display: none; }
+    .hero { padding: 3rem 0 2.2rem; }
+    .hero,
+    .hero > *,
+    .lab-stage,
+    .essay-card,
+    .notes { min-width: 0; max-width: 100%; }
+    h1 { max-width: 340px; font-size: 38px; line-height: 1.04; }
+    .lede { font-size: 17.5px; }
+    .hero-actions { align-items: stretch; }
+    .button { width: 100%; }
+    .meta-strip { grid-template-columns: 1fr; }
+    .meta-strip span { border-bottom: 1px solid var(--line); }
+    .meta-strip span:last-child { border-bottom: 0; }
+    .lab-stage { min-height: 380px; width: 100%; }
+    .lab-label { font-size: 10px; }
+    .lab-label span:last-child { display: none; }
+    .rail-note { left: 24px; right: 24px; top: 56px; }
+    .preview-lock-large { left: 24px; bottom: 78px; transform: scale(0.82); transform-origin: left bottom; }
+    .wave-large { top: 134px; right: 6px; width: 156px; }
+    .black-hole-large { right: 28px; bottom: 82px; width: 104px; height: 104px; }
+    .black-hole-large::before { inset: 30px; }
+    .black-hole-large::after { left: -15px; right: -15px; top: 43px; height: 22px; }
+    .bench { left: 22px; right: 22px; }
+    .section-head { align-items: start; flex-direction: column; gap: 0.65rem; }
+    .section-head h2 { font-size: 32px; }
+    .essay-card { min-height: auto; padding: 1rem; }
+    .essay-card h3 { font-size: 31px; }
+    .essay-card p { font-size: 15.5px; }
+    .queue li { grid-template-columns: 1fr; gap: 0.2rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 1ms !important;
+    }
+  }
 </style>
 </head>
 <body>
-  <nav class="topnav"><a href="https://viraat.dev/">← viraat.dev</a></nav>
+  <nav class="topnav page" aria-label="Primary">
+    <a href="https://viraat.dev/">← viraat.dev</a>
+    <span class="mark"><span class="pulse" aria-hidden="true"></span> live explainers</span>
+  </nav>
 
-  <div class="wrap">
-    <header class="page">
-      <h1>Interactive Blogs</h1>
-      <p>Hands-on explainers, in the spirit of <a href="https://ciechanow.ski/" target="_blank" rel="noopener" style="color:var(--link);text-decoration:none">Bartosz Ciechanowski</a>. None of these are videos. Every figure is a live model you can drag, spin, and poke at. Some of them make noise.</p>
-    </header>
+  <main class="page">
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <div class="eyebrow">Interactive blogs</div>
+        <h1 id="page-title">Essays that behave like machines.</h1>
+        <p class="lede">These are not posts with diagrams sprinkled in. They are small browser-native models for things that only make sense once you can drag them around: a lock binding pin by pin, waves deleting each other, light getting trapped by gravity.</p>
+        <p class="lede">Built in the spirit of <a href="https://ciechanow.ski/" target="_blank" rel="noopener">Bartosz Ciechanowski</a>, with more impatience for static diagrams.</p>
 
-    <div class="list">
-      <a class="card" href="/picking-locks">
-        <div class="row"><h2>Picking Locks</h2></div>
-        <p>How the most common lock in the world works, and how it's picked. Spin a real 3D cutaway, slide the key in, and pick it open pin by pin while it clicks.</p>
-        <div class="go">Open →</div>
-      </a>
+        <div class="hero-actions">
+          <a class="button" href="#essays">Start reading</a>
+          <a class="button secondary" href="/picking-locks">Open the newest essay</a>
+        </div>
 
-      <a class="card" href="/noise-canceling">
-        <div class="row"><h2>Noise Canceling</h2></div>
-        <p>How headphones erase sound with more sound. The figures actually play audio, so you can hear two waves cancel into silence.</p>
-        <div class="go">Open →</div>
-      </a>
+        <div class="meta-strip" aria-label="Collection details">
+          <span><strong>3</strong> finished essays</span>
+          <span><strong>WebGL</strong> real-time scenes</span>
+          <span><strong>Audio</strong> where sound matters</span>
+        </div>
+      </div>
 
-      <a class="card" href="/black-hole">
-        <div class="row"><h2>Into a Black Hole</h2></div>
-        <p>What happens to light as it falls in. Real Schwarzschild geodesics, the photon sphere, the event horizon, and gravitational lensing you can orbit around.</p>
-        <div class="go">Open →</div>
-      </a>
-    </div>
+      <div class="lab-stage" aria-hidden="true">
+        <div class="lab-label"><span>bench view</span><span>drag / listen / orbit</span></div>
+        <p class="rail-note">Three explanations, one rule: if a thing moves in the real world, the essay should move too.</p>
 
-    <footer class="page">
-      <p>By <a href="https://viraat.dev/">Viraat Das</a>. More on the way.</p>
-    </footer>
-  </div>
+        <div class="preview-lock-large">
+          <div class="shackle"></div>
+          <div class="lock-body">
+            <span class="lock-pin"></span>
+            <span class="lock-pin"></span>
+            <span class="lock-pin"></span>
+            <span class="lock-pin"></span>
+            <span class="keyhole"></span>
+          </div>
+        </div>
+
+        <div class="wave-large">
+          <svg viewBox="0 0 260 160">
+            <path class="wave-one" d="M4 70 C 28 12, 52 12, 76 70 S 124 128, 148 70 S 196 12, 220 70 S 248 128, 272 70"></path>
+            <path class="wave-two" d="M4 90 C 28 148, 52 148, 76 90 S 124 32, 148 90 S 196 148, 220 90 S 248 32, 272 90"></path>
+            <path class="wave-sum" d="M4 80 C 34 80, 54 80, 76 80 S 124 80, 148 80 S 196 80, 220 80 S 248 80, 272 80"></path>
+          </svg>
+        </div>
+
+        <div class="black-hole-large"></div>
+        <div class="bench"></div>
+      </div>
+    </section>
+
+    <section id="essays" aria-labelledby="essays-title">
+      <div class="section-head">
+        <h2 id="essays-title">Pick a mechanism.</h2>
+        <p>Each piece starts with the familiar object, then opens it up until the moving part is impossible to miss.</p>
+      </div>
+
+      <div class="essay-list">
+        <a class="essay-card essay-lock" href="/picking-locks">
+          <div class="essay-copy">
+            <div class="kicker">mechanical security · 3D + sound</div>
+            <h3>Picking Locks</h3>
+            <p>A pin tumbler lock looks like a sealed little authority figure. Cut it open and it becomes five sloppy metal stacks, a shear line, and a bet that you cannot feel which pin is binding.</p>
+            <ul class="chips" aria-label="Essay features">
+              <li>spin the cutaway</li>
+              <li>slide the key</li>
+              <li>set pins by hand</li>
+              <li>hear the clicks</li>
+            </ul>
+            <span class="open">Open essay</span>
+          </div>
+          <div class="card-preview" aria-hidden="true">
+            <div class="mini-lock">
+              <div class="arc"></div>
+              <div class="body"></div>
+              <span class="pin"></span>
+              <span class="pin"></span>
+              <span class="pin"></span>
+              <span class="pin"></span>
+              <span class="mini-key"></span>
+            </div>
+          </div>
+        </a>
+
+        <a class="essay-card essay-wave" href="/noise-canceling">
+          <div class="essay-copy">
+            <div class="kicker">sound · audible model</div>
+            <h3>Noise Canceling</h3>
+            <p>The trick is almost rude: add sound to remove sound. Watch two pressure waves add, flip one exactly upside down, then hear the drone collapse when the math lands at your ear.</p>
+            <ul class="chips" aria-label="Essay features">
+              <li>play the waves</li>
+              <li>drag phase</li>
+              <li>toggle cancellation</li>
+              <li>break the accuracy</li>
+            </ul>
+            <span class="open">Open essay</span>
+          </div>
+          <div class="card-preview" aria-hidden="true">
+            <div class="wave-card">
+              <span class="baseline"></span>
+              <svg viewBox="0 0 250 170">
+                <path class="wave-one" d="M-10 76 C 18 18, 46 18, 74 76 S 130 134, 158 76 S 214 18, 242 76 S 298 134, 326 76"></path>
+                <path class="wave-two" d="M-10 94 C 18 152, 46 152, 74 94 S 130 36, 158 94 S 214 152, 242 94 S 298 36, 326 94"></path>
+                <path class="wave-sum" d="M-10 85 C 20 85, 46 85, 74 85 S 130 85, 158 85 S 214 85, 242 85 S 298 85, 326 85"></path>
+              </svg>
+              <span class="speaker"></span>
+            </div>
+          </div>
+        </a>
+
+        <a class="essay-card essay-hole" href="/black-hole">
+          <div class="essay-copy">
+            <div class="kicker">gravity · real-time lensing</div>
+            <h3>Into a Black Hole</h3>
+            <p>Follow light until it runs out of exits. The essay traces rays through a Schwarzschild black hole, from gentle deflection to the photon sphere to the dark logic of the horizon.</p>
+            <ul class="chips" aria-label="Essay features">
+              <li>orbit the lens</li>
+              <li>aim a light ray</li>
+              <li>find the photon sphere</li>
+              <li>watch the disk bend</li>
+            </ul>
+            <span class="open">Open essay</span>
+          </div>
+          <div class="card-preview" aria-hidden="true">
+            <span class="orbit-line"></span>
+            <span class="orbit-dot"></span>
+            <div class="mini-hole"></div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section class="notes" aria-labelledby="notes-title">
+      <div>
+        <h2 id="notes-title">The bar for adding another one.</h2>
+        <p>If a subject can be explained by a screenshot, it does not belong here. The point is to choose ideas where the mental model changes once the reader can manipulate the mechanism directly.</p>
+      </div>
+      <ul class="queue" aria-label="Ideas under consideration">
+        <li><span>sketch</span><strong>Gyroscopes, without the hand-wavy explanation</strong></li>
+        <li><span>sketch</span><strong>How batteries age, one ion traffic jam at a time</strong></li>
+        <li><span>sketch</span><strong>Neural nets as surfaces you can actually push around</strong></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="page">
+    <p>By <a href="https://viraat.dev/">Viraat Das</a>. The essays are written as plain HTML, CSS, WebGL, and browser audio so the model stays close to the explanation.</p>
+  </footer>
 </body>
 </html>
