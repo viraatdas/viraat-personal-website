@@ -366,6 +366,7 @@ function makeAncDevice(scene) {
   const cyanMat = new THREE.MeshBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.48, blending: THREE.AdditiveBlending, depthWrite: false });
   const amberMat = new THREE.MeshBasicMaterial({ color: 0xe0883f, transparent: true, opacity: 0.36, blending: THREE.AdditiveBlending, depthWrite: false });
   const greenMat = new THREE.MeshBasicMaterial({ color: 0x46c08a, transparent: true, opacity: 0.34, blending: THREE.AdditiveBlending, depthWrite: false });
+  const residualMat = new THREE.MeshBasicMaterial({ color: 0xff9b48, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
 
   const cup = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.055, 18, 80), shellMat);
   cup.position.set(0, 0.42, 3.62);
@@ -466,6 +467,14 @@ function makeAncDevice(scene) {
   const speakerPulse = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.013, 8, 64), cyanMat.clone());
   speakerPulse.position.copy(speaker.position);
   group.add(speakerPulse);
+  const residualRings = [];
+  for (let i = 0; i < 3; i++) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.42 + i * 0.075, 0.008, 8, 72), residualMat.clone());
+    ring.position.copy(drum.position);
+    ring.visible = false;
+    group.add(ring);
+    residualRings.push({ ring, offset: i / 3 });
+  }
 
   return {
     update(t, residual, on, accuracy) {
@@ -486,6 +495,16 @@ function makeAncDevice(scene) {
       feedbackPath.line.material.opacity = on ? 0.16 + correction * 0.46 : 0.06;
       feedbackRing.scale.setScalar(1.0 + correction * 0.55 + (reduceMotion ? 0 : 0.07 * Math.sin(t * 6.7)));
       feedbackRing.material.opacity = on ? 0.12 + correction * 0.55 : 0.08;
+      feedbackMic.scale.setScalar(1 + correction * 0.22 + (reduceMotion ? 0 : 0.035 * Math.sin(t * 7.1)));
+      const leakage = on ? clamp((1 - accuracy) * 0.9 + motion * 0.55, 0, 1) : clamp(motion * 0.75, 0, 1);
+      for (const item of residualRings) {
+        const u = reduceMotion ? item.offset : (t * 0.62 + item.offset) % 1;
+        item.ring.visible = leakage > 0.05 && !reduceMotion;
+        item.ring.position.set(drum.position.x, drum.position.y, drum.position.z + 0.012);
+        item.ring.scale.setScalar(0.88 + leakage * 0.26 + u * 0.48);
+        item.ring.rotation.z += reduceMotion ? 0 : 0.003 + leakage * 0.006;
+        item.ring.material.opacity = item.ring.visible ? (1 - u) * (0.1 + leakage * 0.38) : 0;
+      }
 
       fan.rotation.z += reduceMotion ? 0 : 0.18 + motion * 0.04;
       engineRing.scale.setScalar(1 + motion * 0.04);

@@ -664,7 +664,7 @@ function setCutaway(lock, on) {
     loadDots.push(dot);
   }
 
-  const ledges = [], clickRings = [], bindRings = [], contactPads = [];
+  const ledges = [], clickRings = [], bindRings = [], contactPads = [], springHalos = [];
   const ledgeGeo = new THREE.BoxGeometry(0.5, 0.035, 0.78);
   const clickGeo = new THREE.TorusGeometry(0.34, 0.015, 8, 48);
   const bindGeo = new THREE.TorusGeometry(0.29, 0.012, 8, 48);
@@ -734,6 +734,25 @@ function setCutaway(lock, on) {
     pad.visible = false;
     lock.group.add(pad);
     contactPads.push(pad);
+
+    const halos = [];
+    for (let j = 0; j < 3; j++) {
+      const halo = new THREE.Mesh(
+        new THREE.TorusGeometry(PIN_R + 0.115, 0.008, 8, 44),
+        new THREE.MeshBasicMaterial({
+          color: 0xffb45a,
+          transparent: true,
+          opacity: 0,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        })
+      );
+      halo.rotation.x = Math.PI / 2;
+      halo.visible = false;
+      lock.group.add(halo);
+      halos.push(halo);
+    }
+    springHalos.push(halos);
   }
 
   // fat invisible grab proxies so each pin column is easy to grab and drag
@@ -748,6 +767,7 @@ function setCutaway(lock, on) {
   // emissive color objects for highlighting (clone so we don't tint every lock)
   lock.driverPins.forEach(d => { d.mesh.material = d.mesh.material.clone(); d.mesh.material.emissive = new THREE.Color(0x000000); });
   lock.keyPins.forEach(k => { k.body.material = k.body.material.clone(); k.body.material.emissive = new THREE.Color(0x000000); });
+  lock.springs.forEach(s => { s.mesh.material = s.mesh.material.clone(); s.mesh.material.emissive = new THREE.Color(0x000000); });
 
   let order, setFlags, lifts, manual, setPulse, active, angle, opened;
   function init() {
@@ -836,7 +856,10 @@ function setCutaway(lock, on) {
     if (sc === N && !opened) { opened = true; Sound.open(); }
     const targetAngle = opened ? 0.9 : (ckTension.checked ? 0.02 + sc * 0.02 : 0);
     angle += (targetAngle - angle) * 0.12;
-    lock.plugGroup.rotation.x = angle;
+    const torqueShiver = ckTension.checked && !opened && !reduceMotion
+      ? Math.sin(ts * 0.045) * 0.0035 + Math.sin(ts * 0.091) * 0.0015
+      : 0;
+    lock.plugGroup.rotation.x = angle + torqueShiver;
 
     for (let i = 0; i < N; i++) {
       let target;
@@ -883,8 +906,25 @@ function setCutaway(lock, on) {
       pad.scale.set(0.7 + flashLoad * 0.42, 1, 0.72 + flashLoad * 0.25);
 
       const spring = lock.springs[i].mesh;
+      const springForce = clamp((active === i ? manual[i] : lifts[i]) / Math.max(0.001, lock.keyPins[i].bit + 0.18), 0, 1);
+      const springLoad = Math.max(
+        isCurrentBind ? 0.34 + springForce * 0.36 : springForce * (active === i ? 0.72 : 0.18),
+        flash * 0.86,
+        setFlags[i] ? 0.16 : 0
+      );
+      spring.material.emissive.setHex(0xffb45a);
+      spring.material.emissiveIntensity = springLoad * 0.52;
       const springKick = flash > 0 ? Math.sin((1 - flash) * Math.PI * 5) * flash * 0.16 : 0;
       spring.rotation.z = reduceMotion ? 0 : springKick + (active === i ? Math.sin(ts * 0.024 + i) * 0.055 : 0);
+      const span = Math.max(0.18, CH_TOP - 0.05 - spring.position.y);
+      springHalos[i].forEach((halo, j) => {
+        const u = (j + 1) / (springHalos[i].length + 1);
+        const breathe = reduceMotion ? 0 : 0.045 * Math.sin(ts * 0.012 + i * 0.9 + j * 1.6);
+        halo.visible = springLoad > 0.08 && !reduceMotion;
+        halo.position.set(XS[i], spring.position.y + span * u, 0);
+        halo.scale.setScalar(0.82 + springLoad * 0.34 + breathe);
+        halo.material.opacity = halo.visible ? springLoad * (0.16 + u * 0.1) : 0;
+      });
     }
 
     const guidePin = active >= 0 ? active : b;

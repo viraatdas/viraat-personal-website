@@ -508,10 +508,20 @@ function primeIdleOrbit(controls, canvas, speed) {
   scene.add(dotMesh);
   const redshiftHalo = new THREE.Mesh(
     new THREE.SphereGeometry(0.25, 24, 16),
-    new THREE.MeshBasicMaterial({ color: 0xff5d2a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
+    new THREE.MeshBasicMaterial({ color: 0xff5d2a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false })
   );
   redshiftHalo.visible = false;
   scene.add(redshiftHalo);
+  const redshiftWake = [];
+  for (let i = 0; i < 7; i++) {
+    const wake = new THREE.Mesh(
+      new THREE.SphereGeometry(0.17 + i * 0.012, 18, 12),
+      new THREE.MeshBasicMaterial({ color: 0xff5d2a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false })
+    );
+    wake.visible = false;
+    scene.add(wake);
+    redshiftWake.push(wake);
+  }
   const trailDots = [];
   const TRAIL_COUNT = 14;
   for (let i = 0; i < TRAIL_COUNT; i++) {
@@ -588,7 +598,23 @@ function primeIdleOrbit(controls, canvas, speed) {
       redshiftHalo.position.copy(dotMesh.position);
       redshiftHalo.visible = redshift > 0.08 && !reduceMotion;
       redshiftHalo.scale.setScalar(1.0 + redshift * 2.5 + 0.12 * Math.sin(ts * 0.01));
-      redshiftHalo.material.opacity = redshiftHalo.visible ? redshift * 0.32 : 0;
+      redshiftHalo.material.opacity = redshiftHalo.visible ? redshift * 0.44 : 0;
+      for (let i = 0; i < redshiftWake.length; i++) {
+        const lag = (i + 1) * 0.031;
+        const tt = dotT - lag;
+        const wake = redshiftWake[i];
+        if (tt <= 0 || reduceMotion) {
+          wake.visible = false;
+          wake.material.opacity = 0;
+          continue;
+        }
+        curve.getPointAt(clamp(tt, 0, 1), wake.position);
+        const wakeRadius = Math.max(0.001, wake.position.length());
+        const wakeRed = clamp((3.9 - wakeRadius) / 2.9, 0, 1);
+        wake.visible = wakeRed > 0.1;
+        wake.scale.setScalar(1.0 + wakeRed * (1.35 + i * 0.12));
+        wake.material.opacity = wake.visible ? wakeRed * 0.26 * (1 - i / redshiftWake.length) : 0;
+      }
       for (let i = 0; i < trailDots.length; i++) {
         const tt = (dotT - (i + 1) * 0.018 + 1) % 1;
         curve.getPointAt(clamp(tt, 0, 1), trailDots[i].position);
