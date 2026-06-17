@@ -304,6 +304,26 @@ const G = {
   shearLine: new THREE.CylinderGeometry(0.02, 0.02, 4.0, 12),
 };
 
+function makeKeyBladeGeometry() {
+  const bottom = CH_BOTTOM - 0.23;
+  const shoulder = CH_BOTTOM - 0.08;
+  const shape = new THREE.Shape();
+  shape.moveTo(-2.08, bottom);
+  shape.lineTo(2.08, bottom);
+  shape.lineTo(2.08, shoulder + 0.12);
+  for (let i = N - 1; i >= 0; i--) {
+    const y = shoulder + BIT[i] * MAXBIT;
+    shape.lineTo(XS[i] + 0.23, y);
+    shape.lineTo(XS[i] - 0.18, y);
+  }
+  shape.lineTo(-2.08, shoulder + 0.05);
+  shape.lineTo(-2.08, bottom);
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.42, bevelEnabled: true, bevelSegments: 3, bevelSize: 0.035, bevelThickness: 0.035 });
+  geo.translate(0, 0, -0.21);
+  geo.computeVertexNormals();
+  return geo;
+}
+
 // build one lock into a parent; returns refs
 function buildLock(parent) {
   const M = mats();
@@ -374,20 +394,17 @@ function buildLock(parent) {
 
   // key (toothed blade) in plugGroup, slides along X
   const key = new THREE.Group();
-  const blade = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.16, 0.42), M.key);
-  blade.position.y = CH_BOTTOM - 0.12;
+  const blade = new THREE.Mesh(makeKeyBladeGeometry(), M.key);
   blade.castShadow = true;
   key.add(blade);
-  for (let i = 0; i < N; i++) {
-    const h = BIT[i] * MAXBIT;
-    const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.34, Math.max(0.04, h), 0.4), M.key);
-    tooth.position.set(XS[i], CH_BOTTOM - 0.04 + Math.max(0.04, h) / 2, 0);
-    key.add(tooth);
-  }
   const bow = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.09, 12, 28), M.key);
   bow.position.set(2.35, CH_BOTTOM - 0.04, 0);
   bow.rotation.y = Math.PI / 2;
   key.add(bow);
+  const shoulder = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.42, 0.44), M.key);
+  shoulder.position.set(2.03, CH_BOTTOM - 0.03, 0);
+  shoulder.castShadow = true;
+  key.add(shoulder);
   plugGroup.add(key);
 
   return { group, plugGroup, housing, keyPins, driverPins, springs, key, shearLine };
@@ -607,13 +624,14 @@ function setCutaway(lock, on) {
   lock.driverPins.forEach(d => { d.mesh.material = d.mesh.material.clone(); d.mesh.material.emissive = new THREE.Color(0x000000); });
   lock.keyPins.forEach(k => { k.body.material = k.body.material.clone(); k.body.material.emissive = new THREE.Color(0x000000); });
 
-  let order, setFlags, lifts, manual, active, angle, opened;
+  let order, setFlags, lifts, manual, setPulse, active, angle, opened;
   function init() {
     const tol = []; for (let i = 0; i < N; i++) tol.push([i, Math.random()]);
     tol.sort((a, b) => b[1] - a[1]); order = tol.map(t => t[0]);
     setFlags = [false, false, false, false, false];
     lifts = [0, 0, 0, 0, 0];
     manual = [0, 0, 0, 0, 0];
+    setPulse = [0, 0, 0, 0, 0];
     active = -1; angle = 0; opened = false;
   }
   init();
@@ -641,7 +659,7 @@ function setCutaway(lock, on) {
   function trySet(i) {
     if (setFlags[i] || opened) return false;
     if (i === binding() && manual[i] >= lock.keyPins[i].bit - 0.03) {
-      setFlags[i] = true; manual[i] = lock.keyPins[i].bit; Sound.click(); return true;
+      setFlags[i] = true; manual[i] = lock.keyPins[i].bit; setPulse[i] = 1; Sound.click(); return true;
     }
     return false;
   }
@@ -672,7 +690,7 @@ function setCutaway(lock, on) {
     // setting is forgiving: a tap on the binding pin, or any decent upward push, catches it
     if (active === b && !setFlags[active]) {
       if (!dragMoved || manual[active] >= lock.keyPins[active].bit * 0.5) {
-        setFlags[active] = true; manual[active] = lock.keyPins[active].bit; Sound.click();
+        setFlags[active] = true; manual[active] = lock.keyPins[active].bit; setPulse[active] = 1; Sound.click();
       }
     } else if (!dragMoved && b >= 0 && active !== b) {
       Sound.dud();
@@ -697,10 +715,12 @@ function setCutaway(lock, on) {
 
     for (let i = 0; i < N; i++) {
       let target;
-      if (setFlags[i]) target = lock.keyPins[i].bit;          // sits on the ledge
+      const bounce = setPulse[i] > 0 ? Math.sin(setPulse[i] * Math.PI * 3) * setPulse[i] * 0.06 : 0;
+      if (setFlags[i]) target = lock.keyPins[i].bit + bounce; // sits on the ledge, then settles
       else if (active === i) target = manual[i];              // being pushed
       else { target = 0; manual[i] = 0; }                    // springs back
       lifts[i] += (target - lifts[i]) * (active === i ? 0.55 : 0.28);
+      setPulse[i] = Math.max(0, setPulse[i] - 0.035);
 
       const isBind = (i === b);
       const km = lock.keyPins[i].body.material;
@@ -715,6 +735,7 @@ function setCutaway(lock, on) {
     const guidePin = active >= 0 ? active : b;
     pickTool.visible = ckTension.checked && guidePin >= 0 && !opened;
     wrench.visible = ckTension.checked || opened;
+    wrench.rotation.x = (ckTension.checked || opened) ? -0.04 - sc * 0.012 + (reduceMotion ? 0 : Math.sin(ts * 0.012) * 0.006) : 0;
     if (pickTool.visible) {
       const wobble = reduceMotion ? 0 : Math.sin(ts * 0.006) * 0.025;
       const targetX = XS[guidePin] - 0.08;

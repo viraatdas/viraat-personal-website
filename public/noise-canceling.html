@@ -239,6 +239,7 @@ function makeSurface(canvas, height, opts) {
   const particleCount = opts.particles === false ? 0 : 220;
   const particleBase = new Float32Array(particleCount * 3);
   const particlePos = new Float32Array(particleCount * 3);
+  const particleColor = new Float32Array(particleCount * 3);
   for (let i = 0; i < particleCount; i++) {
     const x = (Math.random() - 0.5) * SIZE * 0.92;
     const z = (Math.random() - 0.5) * SIZE * 0.92;
@@ -248,9 +249,10 @@ function makeSurface(canvas, height, opts) {
   }
   const particleGeo = new THREE.BufferGeometry();
   particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePos, 3));
+  particleGeo.setAttribute("color", new THREE.BufferAttribute(particleColor, 3));
   const particles = new THREE.Points(
     particleGeo,
-    new THREE.PointsMaterial({ color: 0xb8e3ee, size: 0.035, transparent: true, opacity: 0.38, depthWrite: false })
+    new THREE.PointsMaterial({ vertexColors: true, size: 0.04, transparent: true, opacity: 0.56, depthWrite: false })
   );
   if (particleCount) scene.add(particles);
 
@@ -277,6 +279,7 @@ function makeSurface(canvas, height, opts) {
   const pos = geo.attributes.position;
   const col = geo.attributes.color;
   const cLow = new THREE.Color(0x2a6fb5), cMid = new THREE.Color(0x0e1722), cHigh = new THREE.Color(0xe0772f);
+  const pCold = new THREE.Color(0x57b8e0), pCalm = new THREE.Color(0x8d98a8), pHot = new THREE.Color(0xff9b48);
 
   function update(t) {
     let maxAbs = 0.0001;
@@ -319,8 +322,15 @@ function makeSurface(canvas, height, opts) {
         const pressure = height(x, z, t);
         const drift = reduceMotion ? 0 : 0.035 * Math.sin(t * 2.4 + i * 1.37);
         pAttr.setXYZ(i, x + drift + pressure * 0.04, baseY + pressure * 0.18, z);
+        const u = clamp(pressure / 1.15, -1, 1);
+        const pc = u >= 0 ? pCalm.clone().lerp(pHot, u) : pCalm.clone().lerp(pCold, -u);
+        const flicker = reduceMotion ? 1 : 0.82 + 0.18 * Math.sin(t * 7.0 + i * 0.73);
+        particleColor[i * 3] = pc.r * flicker;
+        particleColor[i * 3 + 1] = pc.g * flicker;
+        particleColor[i * 3 + 2] = pc.b * flicker;
       }
       pAttr.needsUpdate = true;
+      particles.geometry.attributes.color.needsUpdate = true;
     }
     pos.needsUpdate = true; col.needsUpdate = true;
     geo.computeVertexNormals();
