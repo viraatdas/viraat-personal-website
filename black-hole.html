@@ -753,31 +753,37 @@ function primeIdleOrbit(controls, canvas, speed) {
 
   const coneGroup = new THREE.Group();
   scene.add(coneGroup);
-  const coneMat = new THREE.MeshBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+  const coneMat = new THREE.MeshBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
   const cone = new THREE.Mesh(new THREE.ConeGeometry(0.72, 1.55, 64, 1, true), coneMat);
   cone.position.y = 0.78;
+  cone.renderOrder = 5;
   coneGroup.add(cone);
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.012, 8, 80), new THREE.MeshBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.68, blending: THREE.AdditiveBlending, depthWrite: false }));
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.012, 8, 80), new THREE.MeshBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.68, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false }));
   rim.position.y = 0.01;
   rim.rotation.x = Math.PI / 2;
+  rim.renderOrder = 6;
   coneGroup.add(rim);
-  const eventDot = new THREE.Mesh(new THREE.SphereGeometry(0.08, 18, 18), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  const eventDot = new THREE.Mesh(new THREE.SphereGeometry(0.08, 18, 18), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false }));
+  eventDot.renderOrder = 8;
   coneGroup.add(eventDot);
 
   const outward = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(1.2, 1.15, 0)]),
-    new THREE.LineBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.9 })
+    new THREE.LineBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.9, depthTest: false })
   );
+  outward.renderOrder = 7;
   coneGroup.add(outward);
   const inward = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(-1.2, 1.15, 0)]),
-    new THREE.LineBasicMaterial({ color: 0xe0772f, transparent: true, opacity: 0.78 })
+    new THREE.LineBasicMaterial({ color: 0xe0772f, transparent: true, opacity: 0.78, depthTest: false })
   );
+  inward.renderOrder = 7;
   coneGroup.add(inward);
   const photons = [outward, inward].map((line, i) => {
-    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), new THREE.MeshBasicMaterial({ color: i ? 0xe0772f : 0x57b8e0, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending }));
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), new THREE.MeshBasicMaterial({ color: i ? 0xe0772f : 0x57b8e0, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false }));
+    dot.renderOrder = 8;
     coneGroup.add(dot);
-    return { dot, line, offset: i * 0.44 };
+    return { dot, line, offset: i * 0.44, escaping: i === 0 };
   });
   const worldlinePts = [];
   for (let i = 0; i <= 90; i++) {
@@ -810,6 +816,10 @@ function primeIdleOrbit(controls, canvas, speed) {
     scene.add(tick);
     clockTicks.push(tick);
   }
+  const escapeColor = new THREE.Color(0x57b8e0);
+  const redshiftColor = new THREE.Color(0xff6b34);
+  const horizonCool = new THREE.Color(0xe0772f);
+  const horizonHot = new THREE.Color(0xffc27a);
 
   function resize() {
     const w = canvas.clientWidth || canvas.parentElement.clientWidth;
@@ -823,11 +833,17 @@ function primeIdleOrbit(controls, canvas, speed) {
     const v = parseFloat(slFall.value);
     const r = 4.4 - v * 3.72;
     const tilt = v * 1.42;
-    coneGroup.position.set(r, -0.05 + v * 0.22, 0);
+    const horizonGrip = smoothstep(0.64, 0.96, v);
+    const pulse = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(ts * 0.006);
+    coneGroup.position.set(r + horizonGrip * 0.16, -0.05 + v * 0.22, 0);
     coneGroup.rotation.z = tilt;
-    coneMat.opacity = 0.16 + v * 0.12;
-    rim.material.opacity = 0.48 + v * 0.28;
-    horizonRing.material.opacity = 0.42 + 0.18 * Math.sin(ts * 0.003);
+    coneGroup.scale.set(1 - horizonGrip * 0.18, 1, 1 + horizonGrip * 0.08);
+    coneMat.opacity = 0.18 + v * 0.14 + horizonGrip * 0.08;
+    rim.material.opacity = 0.52 + v * 0.24 + horizonGrip * 0.16;
+    horizon.scale.set(1 + horizonGrip * 0.045, 1 - horizonGrip * 0.035, 1 + horizonGrip * 0.045);
+    horizonRing.scale.setScalar(1 + horizonGrip * (0.04 + pulse * 0.105));
+    horizonRing.material.opacity = 0.38 + horizonGrip * 0.32 + pulse * 0.12;
+    horizonRing.material.color.copy(horizonCool).lerp(horizonHot, horizonGrip * (0.58 + pulse * 0.42));
     worldline.material.opacity = 0.32 + v * 0.32;
     for (let i = 0; i < fallBeads.length; i++) {
       const bead = fallBeads[i];
@@ -845,6 +861,7 @@ function primeIdleOrbit(controls, canvas, speed) {
       const nearHorizon = smoothstep(0.62, 0.95, u);
       const focus = Math.max(0, 1 - Math.abs(v - u) * 4.2);
       tick.material.opacity = 0.12 + focus * 0.55 + nearHorizon * v * 0.22;
+      tick.material.color.copy(horizonCool).lerp(redshiftColor, nearHorizon * v);
       tick.scale.setScalar(1 + focus * 0.45 - nearHorizon * v * 0.18);
       tick.rotation.z += reduceMotion ? 0 : 0.02 * (1 - nearHorizon * v * 0.78);
     }
@@ -853,7 +870,9 @@ function primeIdleOrbit(controls, canvas, speed) {
     const inEnd = new THREE.Vector3(-1.2 - v * 1.15, 1.15, 0);
     outward.geometry.setFromPoints([new THREE.Vector3(), outEnd]);
     inward.geometry.setFromPoints([new THREE.Vector3(), inEnd]);
-    outward.material.opacity = v > 0.82 ? 0.25 : 0.9;
+    outward.material.opacity = Math.max(0.18, 0.9 - horizonGrip * 0.58);
+    outward.material.color.copy(escapeColor).lerp(redshiftColor, horizonGrip);
+    inward.material.opacity = 0.68 + horizonGrip * 0.24;
 
     for (const item of photons) {
       const u = reduceMotion ? item.offset : (ts * 0.00045 + item.offset) % 1;
@@ -863,6 +882,14 @@ function primeIdleOrbit(controls, canvas, speed) {
         pts.getY(0) + (pts.getY(1) - pts.getY(0)) * u,
         pts.getZ(0) + (pts.getZ(1) - pts.getZ(0)) * u
       );
+      if (item.escaping) {
+        item.dot.material.color.copy(escapeColor).lerp(redshiftColor, horizonGrip);
+        item.dot.material.opacity = 0.95 - horizonGrip * 0.62;
+        item.dot.scale.setScalar(1 + horizonGrip * 0.85);
+      } else {
+        item.dot.material.opacity = 0.82 + horizonGrip * 0.18;
+        item.dot.scale.setScalar(1 + horizonGrip * 0.42);
+      }
     }
 
     if (v < 0.58) { stCone.textContent = "outward light can still escape"; stCone.className = "status esc"; }

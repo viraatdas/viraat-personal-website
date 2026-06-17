@@ -810,6 +810,47 @@ function makeAncDevice(scene) {
   }
   const lowMeter = addResidualMeter(-3.72, -3.25, 0x46c08a);
   const highMeter = addResidualMeter(3.72, 3.25, 0xe0883f);
+  const leakageBands = [];
+  for (let i = 0; i < 14; i++) {
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+      new THREE.LineBasicMaterial({
+        color: 0xff9b4a,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(0.038, 12, 12),
+      new THREE.MeshBasicMaterial({
+        color: 0xffc27a,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    const bar = new THREE.Mesh(
+      new THREE.BoxGeometry(0.048, 1, 0.07),
+      new THREE.MeshBasicMaterial({
+        color: 0xff8a32,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    line.frustumCulled = false;
+    dot.frustumCulled = false;
+    bar.frustumCulled = false;
+    line.userData.offset = i / 14;
+    S.scene.add(line);
+    S.scene.add(dot);
+    S.scene.add(bar);
+    leakageBands.push({ line, dot, bar });
+  }
 
   let t = 0, last = null;
   function delayMs() { return parseFloat(slDelay.value); }
@@ -878,6 +919,30 @@ function makeAncDevice(scene) {
     meter.bar.material.opacity = 0.2 + energy * 0.55 + shimmer;
     meter.base.material.opacity = 0.16 + energy * 0.18;
   }
+  function updateLeakageBands(time) {
+    const delay = clamp(delayMs() / 8, 0, 1);
+    const drift = reduceMotion ? 0 : time * 0.72;
+    for (const item of leakageBands) {
+      const u = ((item.line.userData.offset + drift - delay * 0.18) % 1 + 1) % 1;
+      const x = -3.8 + u * 7.6;
+      const yNoise = componentY(x, true, false, time) + 0.145;
+      const yAnti = componentY(x, true, true, time) + 0.215;
+      const yMid = (yNoise + yAnti) * 0.5;
+      const gap = Math.abs(yNoise - yAnti);
+      const heat = delay * clamp(gap / 0.72, 0, 1);
+      item.line.geometry.setFromPoints([
+        new THREE.Vector3(x, yNoise, 2.2),
+        new THREE.Vector3(x, yAnti, 2.2)
+      ]);
+      item.line.material.opacity = 0.05 + heat * 0.62;
+      item.bar.position.set(x, yMid, 2.2);
+      item.bar.scale.set(0.8 + heat * 1.8, Math.max(0.04, gap), 1);
+      item.bar.material.opacity = heat * 0.42;
+      item.dot.position.set(x, yMid, 2.2);
+      item.dot.scale.setScalar(0.7 + heat * 2.2);
+      item.dot.material.opacity = heat * 0.76;
+    }
+  }
   function height(x, z, time) {
     return residual(x, z, time) + 0.025 * Math.sin(x * 2.0 + z * 1.5 - time * 2.0);
   }
@@ -903,6 +968,7 @@ function makeAncDevice(scene) {
     for (const cursor of timingCursors) updateCursor(cursor, t);
     updateMeter(lowMeter, laneEnergy(false, t), t, false);
     updateMeter(highMeter, laneEnergy(true, t), t, true);
+    updateLeakageBands(t);
     highAnti.material.opacity = 0.32 + delayMs() / 8 * 0.34;
     S.controls.update(); S.update(t); S.render();
   });
