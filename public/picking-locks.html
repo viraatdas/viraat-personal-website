@@ -232,6 +232,11 @@ const DRIVER_LEN = 0.82;
 const PIN_R = 0.23;
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function springStep(x, v, target, dt, stiffness, damping) {
+  const a = (target - x) * stiffness - v * damping;
+  const nv = v + a * dt;
+  return [x + nv * dt, nv];
+}
 
 function runFigureLoop(canvas, draw) {
   let live = true;
@@ -796,15 +801,21 @@ function setCutaway(lock, on) {
   lock.keyPins.forEach(k => { k.body.material = k.body.material.clone(); k.body.material.emissive = new THREE.Color(0x000000); });
   lock.springs.forEach(s => { s.mesh.material = s.mesh.material.clone(); s.mesh.material.emissive = new THREE.Color(0x000000); });
 
-  let order, setFlags, lifts, manual, setPulse, active, angle, opened;
+  let order, setFlags, lifts, liftVel, manual, setPulse, chamberError, active, angle, opened, physicsLast;
   function init() {
-    const tol = []; for (let i = 0; i < N; i++) tol.push([i, Math.random()]);
+    const tol = [];
+    chamberError = [];
+    for (let i = 0; i < N; i++) {
+      chamberError[i] = 0.004 + Math.random() * 0.014;
+      tol.push([i, chamberError[i]]);
+    }
     tol.sort((a, b) => b[1] - a[1]); order = tol.map(t => t[0]);
     setFlags = [false, false, false, false, false];
     lifts = [0, 0, 0, 0, 0];
+    liftVel = [0, 0, 0, 0, 0];
     manual = [0, 0, 0, 0, 0];
     setPulse = [0, 0, 0, 0, 0];
-    active = -1; angle = 0; opened = false;
+    active = -1; angle = 0; opened = false; physicsLast = null;
   }
   init();
 
@@ -830,8 +841,9 @@ function setCutaway(lock, on) {
   let dragStartY = 0, dragStartLift = 0, dragMoved = false, dudded = false;
   function trySet(i) {
     if (setFlags[i] || opened) return false;
-    if (i === binding() && manual[i] >= lock.keyPins[i].bit - 0.03) {
-      setFlags[i] = true; manual[i] = lock.keyPins[i].bit; setPulse[i] = 1; Sound.click(); return true;
+    const shearError = Math.abs(manual[i] - lock.keyPins[i].bit);
+    if (i === binding() && shearError < 0.07) {
+      setFlags[i] = true; manual[i] = lock.keyPins[i].bit; liftVel[i] = 0; setPulse[i] = 1; Sound.click(); return true;
     }
     return false;
   }
@@ -859,10 +871,11 @@ function setCutaway(lock, on) {
   function endDrag(e) {
     if (active < 0) return;
     const b = binding();
-    // setting is forgiving: a tap on the binding pin, or any decent upward push, catches it
+    // setting is still forgiving, but it has to cross the real shear gap.
     if (active === b && !setFlags[active]) {
-      if (!dragMoved || manual[active] >= lock.keyPins[active].bit * 0.5) {
-        setFlags[active] = true; manual[active] = lock.keyPins[active].bit; setPulse[active] = 1; Sound.click();
+      const shearError = Math.abs(manual[active] - lock.keyPins[active].bit);
+      if (shearError < 0.09 || manual[active] >= lock.keyPins[active].bit * 0.86) {
+        setFlags[active] = true; manual[active] = lock.keyPins[active].bit; liftVel[active] = 0; setPulse[active] = 1; Sound.click();
       }
     } else if (!dragMoved && b >= 0 && active !== b) {
       Sound.dud();
@@ -878,6 +891,9 @@ function setCutaway(lock, on) {
   btReset.addEventListener("click", () => { ckTension.checked = false; fig.controls.enabled = true; init(); update(performance.now()); });
 
   function update(ts) {
+    if (physicsLast == null) physicsLast = ts;
+    const dt = Math.min(0.034, Math.max(0.001, (ts - physicsLast) / 1000 || 0.016));
+    physicsLast = ts;
     const b = binding();
     const sc = setCount();
     if (sc === N && !opened) { opened = true; Sound.open(); }
@@ -894,15 +910,21 @@ function setCutaway(lock, on) {
       if (setFlags[i]) target = lock.keyPins[i].bit + bounce; // sits on the ledge, then settles
       else if (active === i) target = manual[i];              // being pushed
       else { target = 0; manual[i] = 0; }                    // springs back
-      lifts[i] += (target - lifts[i]) * (active === i ? 0.55 : 0.28);
+      const stiffness = active === i ? 420 : (setFlags[i] ? 170 : 130);
+      const damping = active === i ? 34 : (setFlags[i] ? 24 : 18);
+      const stepped = springStep(lifts[i], liftVel[i], target, dt, stiffness, damping);
+      lifts[i] = clamp(stepped[0], 0, lock.keyPins[i].bit + 0.24);
+      liftVel[i] = stepped[1];
+      if (lifts[i] <= 0.0001 && liftVel[i] < 0) liftVel[i] = 0;
       setPulse[i] = Math.max(0, setPulse[i] - 0.035);
 
       const isBind = (i === b);
       const km = lock.keyPins[i].body.material;
       const dm = lock.driverPins[i].mesh.material;
       const liftRatio = clamp(lifts[i] / Math.max(0.001, lock.keyPins[i].bit + 0.18), 0, 1);
+      const loadFromTolerance = chamberError[i] * 3.2;
       const wedge = isBind && ckTension.checked && !opened
-        ? 0.018 + liftRatio * 0.026 + (reduceMotion ? 0 : 0.004 * Math.sin(ts * 0.027 + i))
+        ? loadFromTolerance + liftRatio * 0.026 + (reduceMotion ? 0 : 0.004 * Math.sin(ts * 0.027 + i))
         : (setFlags[i] ? 0.003 : 0);
       lock.keyPins[i].grp.rotation.z += (wedge - lock.keyPins[i].grp.rotation.z) * 0.35;
       lock.driverPins[i].mesh.rotation.z += (wedge * 0.7 - lock.driverPins[i].mesh.rotation.z) * 0.35;
@@ -1121,15 +1143,17 @@ function setCutaway(lock, on) {
 
   const setFlags = [false, false, false, false, false];
   const lifts = [0, 0, 0, 0, 0];
+  const liftVel = [0, 0, 0, 0, 0];
   const pulse = [0, 0, 0, 0, 0];
   const lean = [0, 0, 0, 0, 0];
   const compression = [0, 0, 0, 0, 0];
   const order = [2, 0, 4, 1, 3];
   let t = 0, last = null, startMs = performance.now(), angle = 0, opened = false;
+  let lastRakeX = 0, lastRakeY = CH_BOTTOM - 0.18;
 
   function reset() {
     for (let i = 0; i < N; i++) {
-      setFlags[i] = false; lifts[i] = 0; pulse[i] = 0; lean[i] = 0; compression[i] = 0;
+      setFlags[i] = false; lifts[i] = 0; liftVel[i] = 0; pulse[i] = 0; lean[i] = 0; compression[i] = 0;
       lock.keyPins[i].grp.rotation.z = 0;
       lock.driverPins[i].mesh.rotation.z = 0;
       lock.springs[i].mesh.rotation.z = 0;
@@ -1137,6 +1161,7 @@ function setCutaway(lock, on) {
     }
     for (let i = 0; i < scratchHeat.length; i++) { scratchHeat[i] = 0; scratchLines[i].material.opacity = 0.055; }
     t = 0; last = null; startMs = performance.now(); angle = 0; opened = false;
+    lastRakeX = 0; lastRakeY = CH_BOTTOM - 0.18;
     stRake.textContent = "scrubbing pins";
     stRake.className = "status bind";
   }
@@ -1178,28 +1203,43 @@ function setCutaway(lock, on) {
     rake.position.x = scrub * 1.35;
     rake.position.y = CH_BOTTOM - 0.2 + 0.08 * Math.sin(t * 13) + chatter;
     rake.rotation.z = -0.07 + 0.09 * Math.sin(t * 7.4);
+    const rakeVx = (rake.position.x - lastRakeX) / Math.max(dt, 0.001);
+    const rakeVy = (rake.position.y - lastRakeY) / Math.max(dt, 0.001);
+    lastRakeX = rake.position.x;
+    lastRakeY = rake.position.y;
 
     const bind = nextUnset();
     for (let i = 0; i < N; i++) {
       const hit = Math.max(0, 1 - Math.abs(XS[i] - rake.position.x) / 0.58);
       const slap = hit * Math.max(0, Math.sin(t * 18 + i * 1.7));
       const impulse = reduceMotion ? 0 : Math.pow(hit, 1.7) * Math.max(0, Math.sin(t * 31 + i * 2.1));
-      const springKick = setFlags[i] ? pulse[i] * 0.65 : slap;
+      const upwardImpact = Math.max(0, rakeVy * 0.06 + Math.abs(rakeVx) * 0.014) * hit;
+      const springKick = setFlags[i] ? pulse[i] * 0.65 : Math.max(slap, upwardImpact);
       if (slap > 0.72 && Math.random() < 0.18) emitSpark(XS[i], CH_BOTTOM - 0.22, 0.86, slap);
       if (slap > 0.46) {
         for (let j = 0; j < scratchLines.length; j++) {
           if (Math.abs(scratchLines[j].userData.x - XS[i]) < 0.55) scratchHeat[j] = Math.max(scratchHeat[j], slap);
         }
       }
-      let target = setFlags[i] ? lock.keyPins[i].bit : slap * (lock.keyPins[i].bit + 0.34);
+      const rest = setFlags[i] ? lock.keyPins[i].bit : 0;
+      const contactTarget = Math.max(slap, upwardImpact) * (lock.keyPins[i].bit + 0.34);
+      let target = setFlags[i] ? lock.keyPins[i].bit : contactTarget;
       const luckyTiming = elapsed > 1.25 + sc * 0.95;
-      if (!setFlags[i] && i === bind && ((hit > 0.68 && target > lock.keyPins[i].bit * 0.78) || luckyTiming)) {
+      if (!setFlags[i] && i === bind && ((hit > 0.68 && lifts[i] > lock.keyPins[i].bit * 0.78) || luckyTiming)) {
         setFlags[i] = true;
         pulse[i] = 1;
+        liftVel[i] = 0;
         target = lock.keyPins[i].bit;
       }
       const bounce = pulse[i] > 0 ? Math.sin(pulse[i] * Math.PI * 4) * pulse[i] * 0.075 : 0;
-      lifts[i] += (target + bounce - lifts[i]) * 0.36;
+      const contactForce = Math.max(0, contactTarget - lifts[i]) * 520 * hit;
+      const springForce = (rest + bounce - lifts[i]) * (setFlags[i] ? 210 : 95);
+      const damping = -liftVel[i] * (setFlags[i] ? 28 : 13);
+      liftVel[i] += (springForce + contactForce + damping) * dt;
+      lifts[i] += liftVel[i] * dt;
+      if (lifts[i] < 0) { lifts[i] = 0; if (liftVel[i] < 0) liftVel[i] *= -0.18; }
+      const maxLift = lock.keyPins[i].bit + 0.42;
+      if (lifts[i] > maxLift) { lifts[i] = maxLift; if (liftVel[i] > 0) liftVel[i] *= -0.28; }
       pulse[i] = Math.max(0, pulse[i] - 0.045);
       const side = Math.sign(rake.position.x - XS[i]) || (i % 2 ? 1 : -1);
       const targetLean = side * (slap * 0.115 + impulse * 0.055) + pulse[i] * 0.05;

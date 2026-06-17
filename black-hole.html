@@ -820,6 +820,21 @@ function primeIdleOrbit(controls, canvas, speed) {
   const redshiftColor = new THREE.Color(0xff6b34);
   const horizonCool = new THREE.Color(0xe0772f);
   const horizonHot = new THREE.Color(0xffc27a);
+  const RS = 1.0;
+  const FAR_R = 4.4;
+  const INNER_R = 0.72;
+  function radiusFromSlider(v) {
+    return FAR_R - v * (FAR_R - INNER_R);
+  }
+  function horizonBlend(r) {
+    return 1 - smoothstep(0.86, 1.72, r);
+  }
+  function insideBlend(r) {
+    return clamp((RS - r) / (RS - INNER_R), 0, 1);
+  }
+  function radialLightSpeed(r) {
+    return 1 - RS / Math.max(0.001, r);
+  }
 
   function resize() {
     const w = canvas.clientWidth || canvas.parentElement.clientWidth;
@@ -831,19 +846,25 @@ function primeIdleOrbit(controls, canvas, speed) {
 
   function updateGeometry(ts) {
     const v = parseFloat(slFall.value);
-    const r = 4.4 - v * 3.72;
-    const tilt = v * 1.42;
-    const horizonGrip = smoothstep(0.64, 0.96, v);
+    const r = radiusFromSlider(v);
+    const outSpeed = radialLightSpeed(r);
+    const inSpeed = -1;
+    const outEnd = new THREE.Vector3(outSpeed * 1.28, 1.15, 0);
+    const inEnd = new THREE.Vector3(inSpeed * 1.28, 1.15, 0);
+    const coneCenter = (outEnd.x + inEnd.x) * 0.5;
+    const tilt = Math.atan2(-coneCenter, outEnd.y) * 1.08;
+    const horizonGrip = horizonBlend(r);
+    const inside = insideBlend(r);
     const pulse = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(ts * 0.006);
     coneGroup.position.set(r + horizonGrip * 0.16, -0.05 + v * 0.22, 0);
     coneGroup.rotation.z = tilt;
-    coneGroup.scale.set(1 - horizonGrip * 0.18, 1, 1 + horizonGrip * 0.08);
-    coneMat.opacity = 0.18 + v * 0.14 + horizonGrip * 0.08;
-    rim.material.opacity = 0.52 + v * 0.24 + horizonGrip * 0.16;
+    coneGroup.scale.set(1 - horizonGrip * 0.16, 1, 1 + horizonGrip * 0.08);
+    coneMat.opacity = 0.18 + v * 0.12 + horizonGrip * 0.1 + inside * 0.06;
+    rim.material.opacity = 0.52 + v * 0.2 + horizonGrip * 0.18 + inside * 0.08;
     horizon.scale.set(1 + horizonGrip * 0.045, 1 - horizonGrip * 0.035, 1 + horizonGrip * 0.045);
     horizonRing.scale.setScalar(1 + horizonGrip * (0.04 + pulse * 0.105));
-    horizonRing.material.opacity = 0.38 + horizonGrip * 0.32 + pulse * 0.12;
-    horizonRing.material.color.copy(horizonCool).lerp(horizonHot, horizonGrip * (0.58 + pulse * 0.42));
+    horizonRing.material.opacity = 0.38 + horizonGrip * 0.32 + inside * 0.12 + pulse * 0.12;
+    horizonRing.material.color.copy(horizonCool).lerp(horizonHot, (horizonGrip + inside * 0.5) * (0.58 + pulse * 0.42));
     worldline.material.opacity = 0.32 + v * 0.32;
     for (let i = 0; i < fallBeads.length; i++) {
       const bead = fallBeads[i];
@@ -866,13 +887,11 @@ function primeIdleOrbit(controls, canvas, speed) {
       tick.rotation.z += reduceMotion ? 0 : 0.02 * (1 - nearHorizon * v * 0.78);
     }
 
-    const outEnd = new THREE.Vector3(1.2 - v * 2.35, 1.15, 0);
-    const inEnd = new THREE.Vector3(-1.2 - v * 1.15, 1.15, 0);
     outward.geometry.setFromPoints([new THREE.Vector3(), outEnd]);
     inward.geometry.setFromPoints([new THREE.Vector3(), inEnd]);
-    outward.material.opacity = Math.max(0.18, 0.9 - horizonGrip * 0.58);
+    outward.material.opacity = Math.max(0.14, 0.92 - horizonGrip * 0.52 - inside * 0.18);
     outward.material.color.copy(escapeColor).lerp(redshiftColor, horizonGrip);
-    inward.material.opacity = 0.68 + horizonGrip * 0.24;
+    inward.material.opacity = 0.68 + horizonGrip * 0.22 + inside * 0.12;
 
     for (const item of photons) {
       const u = reduceMotion ? item.offset : (ts * 0.00045 + item.offset) % 1;
@@ -892,8 +911,8 @@ function primeIdleOrbit(controls, canvas, speed) {
       }
     }
 
-    if (v < 0.58) { stCone.textContent = "outward light can still escape"; stCone.className = "status esc"; }
-    else if (v < 0.82) { stCone.textContent = "outward light stalls at the horizon"; stCone.className = "status orbit"; }
+    if (r > 1.05) { stCone.textContent = "outward light can still escape"; stCone.className = "status esc"; }
+    else if (r > 0.98) { stCone.textContent = "outward light stalls at the horizon"; stCone.className = "status orbit"; }
     else { stCone.textContent = "every future points inward"; stCone.className = "status cap"; }
   }
   slFall.addEventListener("input", () => updateGeometry(performance.now()));

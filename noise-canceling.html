@@ -684,7 +684,7 @@ function makeAncDevice(scene) {
     components: (x, time) => {
       const noise = 0.45 * noiseWave(x, time, 0);
       if (!ckAnc.checked) return [noise, 0, noise];
-      const acc = match(); const dphi = (1 - acc) * 0.9;
+      const acc = match(); const dphi = TAU * F * controlDelay(acc);
       const anti = -0.45 * acc * noiseWave(x, time, -dphi);
       return [noise, anti, noise + anti];
     }
@@ -696,14 +696,15 @@ function makeAncDevice(scene) {
 
   function noiseWave(x, time, ph) { let v = 0; for (const [n, a] of harm) v += a * Math.sin((2.0 * n) * x - time * 2.6 * n + ph); return v / 1.7; }
   function match() { return parseFloat(slMatch.value); }
+  function controlDelay(acc) { return (1 - acc) * 0.0016; }
   function height(x, z, time) {
     const noise = noiseWave(x, time, 0);
     if (!ckAnc.checked) return 0.8 * noise;
-    const acc = match(); const dphi = (1 - acc) * 0.9;
+    const acc = match(); const dphi = TAU * F * controlDelay(acc);
     return 0.8 * (noise - acc * noiseWave(x, time, -dphi));
   }
   function noiseAt(tt, ph) { let v = 0; for (const [n, a] of harm) v += a * Math.sin(TAU * F * n * tt + ph * n); return v; }
-  function residualFn(tt) { const noise = noiseAt(tt, 0); if (!ckAnc.checked) return 0.26 * noise; const acc = match(); const delay = (1 - acc) * 0.0016; return 0.26 * (noise - acc * noiseAt(tt - delay, 0)); }
+  function residualFn(tt) { const noise = noiseAt(tt, 0); if (!ckAnc.checked) return 0.26 * noise; const acc = match(); return 0.26 * (noise - acc * noiseAt(tt - controlDelay(acc), 0)); }
   function rebuild() { const c = AE.ctx; if (!c || !playing) return; if (node) { try { node.stop(); } catch (e) {} node.disconnect(); } node = c.createBufferSource(); node.buffer = loopBuffer(c, F, residualFn); node.loop = true; node.connect(gain); node.start(); }
   function start() { const c = AE.ensure(); if (!c) return; gain = c.createGain(); gain.gain.value = 1.0; gain.connect(AE.master); playing = true; rebuild(); btn.classList.add("playing"); btn.textContent = "■ stop"; }
   function stop() { if (node) { try { node.stop(); } catch (e) {} node.disconnect(); node = null; } playing = false; btn.classList.remove("playing"); btn.textContent = "▶ play noise"; }
@@ -854,13 +855,31 @@ function makeAncDevice(scene) {
 
   let t = 0, last = null;
   function delayMs() { return parseFloat(slDelay.value); }
+  const lowPartials = [
+    { hz: 45, k: 1.35, speed: 2.0, amp: 1.0 },
+    { hz: 90, k: 2.7, speed: 4.0, amp: 0.18 }
+  ];
+  const highPartials = [
+    { hz: 620, k: 5.7, speed: 4.2, amp: 0.7 },
+    { hz: 920, k: 8.45, speed: 6.25, amp: 0.42 },
+    { hz: 1280, k: 11.6, speed: 8.35, amp: 0.24 }
+  ];
+  function partials(high) { return high ? highPartials : lowPartials; }
+  function normFor(parts) { return parts.reduce((s, p) => s + Math.abs(p.amp), 0) || 1; }
+  function phaseLag(p) { return TAU * p.hz * delayMs() / 1000; }
+  function lanePressure(x, high, anti, time) {
+    const parts = partials(high);
+    let sum = 0;
+    for (const p of parts) {
+      const theta = p.k * x - p.speed * time;
+      sum += p.amp * Math.sin(theta - (anti ? phaseLag(p) : 0));
+    }
+    return (anti ? -sum : sum) / normFor(parts);
+  }
   function residual(x, z, time) {
     const high = z > 0;
-    const freq = high ? 5.7 : 1.35;
-    const speed = high ? 4.2 : 2.0;
-    const d = delayMs() / 1000;
-    const base = Math.sin(freq * x - time * speed);
-    const anti = -Math.sin(freq * x - (time - d * 55) * speed);
+    const base = lanePressure(x, high, false, time);
+    const anti = lanePressure(x, high, true, time);
     const laneFade = high ? smoothstep(0.0, 0.8, z) : smoothstep(0.0, 0.8, -z);
     return 0.52 * laneFade * (base + anti);
   }
@@ -869,11 +888,7 @@ function makeAncDevice(scene) {
     return u * u * (3 - 2 * u);
   }
   function componentY(x, high, anti, time) {
-    const freq = high ? 5.7 : 1.35;
-    const speed = high ? 4.2 : 2.0;
-    const d = delayMs() / 1000;
-    if (anti) return -0.38 * Math.sin(freq * x - (time - d * 55) * speed);
-    return 0.38 * Math.sin(freq * x - time * speed);
+    return 0.38 * lanePressure(x, high, anti, time);
   }
   function updateTrace(line, high, anti, time) {
     const attr = line.geometry.attributes.position;
@@ -910,6 +925,20 @@ function makeAncDevice(scene) {
       sum += v * v;
     }
     return clamp(Math.sqrt(sum / 44) / 0.62, 0, 1.35);
+  }
+  function modeledLaneEnergy(high) {
+    let sum = 0, ref = 0;
+    for (let t0 = 0; t0 < 18; t0++) {
+      const time = t0 * 0.037;
+      for (let i = 0; i < 44; i++) {
+        const x = -3.8 + i * 7.6 / 43;
+        const n = lanePressure(x, high, false, time);
+        const r = n + lanePressure(x, high, true, time);
+        sum += r * r;
+        ref += n * n;
+      }
+    }
+    return clamp(Math.sqrt(sum / Math.max(0.0001, ref)), 0, 2);
   }
   function updateMeter(meter, energy, time, hot) {
     const shimmer = reduceMotion ? 0 : 0.04 * Math.sin(time * 8 + (hot ? 1.7 : 0));
@@ -948,9 +977,11 @@ function makeAncDevice(scene) {
   }
   function updateStatus() {
     const d = delayMs();
+    const low = modeledLaneEnergy(false);
+    const high = modeledLaneEnergy(true);
     stDelay.textContent = d.toFixed(1) + " ms";
-    stLeak.textContent = d < 1 ? "both mostly cancel" : d < 4 ? "hum cancels, voice leaks" : "timing error gets loud";
-    stLeak.className = "status " + (d < 1 ? "good" : d < 4 ? "" : "loud");
+    stLeak.textContent = high < 0.45 ? "both mostly cancel" : low < 0.9 ? "hum cancels, voice leaks" : "timing error gets loud";
+    stLeak.className = "status " + (high < 0.45 ? "good" : low < 0.9 ? "" : "loud");
   }
   slDelay.addEventListener("input", updateStatus);
   updateStatus();
