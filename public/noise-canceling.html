@@ -236,9 +236,43 @@ function makeSurface(canvas, height, opts) {
   markerRing.rotation.x = Math.PI / 2;
   scene.add(markerRing);
 
+  const particleCount = opts.particles === false ? 0 : 220;
+  const particleBase = new Float32Array(particleCount * 3);
+  const particlePos = new Float32Array(particleCount * 3);
+  for (let i = 0; i < particleCount; i++) {
+    const x = (Math.random() - 0.5) * SIZE * 0.92;
+    const z = (Math.random() - 0.5) * SIZE * 0.92;
+    particleBase[i * 3] = x;
+    particleBase[i * 3 + 1] = 0.18 + Math.random() * 0.95;
+    particleBase[i * 3 + 2] = z;
+  }
+  const particleGeo = new THREE.BufferGeometry();
+  particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePos, 3));
+  const particles = new THREE.Points(
+    particleGeo,
+    new THREE.PointsMaterial({ color: 0xb8e3ee, size: 0.035, transparent: true, opacity: 0.38, depthWrite: false })
+  );
+  if (particleCount) scene.add(particles);
+
   // subtle base grid plane
   const grid = new THREE.GridHelper(SIZE, SEG / 6, 0x223043, 0x172230);
   grid.position.y = -0.02; scene.add(grid);
+
+  const traces = [];
+  if (opts.components) {
+    const traceColors = opts.traceColors || [0x57b8e0, 0xe0883f, 0xf4f7fb];
+    const traceOpacity = opts.traceOpacity || [0.68, 0.68, 0.95];
+    for (let k = 0; k < traceColors.length; k++) {
+      const g = new THREE.BufferGeometry();
+      const arr = new Float32Array(150 * 3);
+      g.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+      const m = new THREE.LineBasicMaterial({ color: traceColors[k], transparent: true, opacity: traceOpacity[k] });
+      const line = new THREE.Line(g, m);
+      line.frustumCulled = false;
+      scene.add(line);
+      traces.push(line);
+    }
+  }
 
   const pos = geo.attributes.position;
   const col = geo.attributes.color;
@@ -264,6 +298,30 @@ function makeSurface(canvas, height, opts) {
     markerRing.position.set(0, 0.02, 0);
     const pulse = reduceMotion ? 1 : 1 + Math.min(0.55, Math.abs(center) * 0.32) + 0.06 * Math.sin(t * 5);
     marker.scale.setScalar(pulse);
+    if (opts.components) {
+      for (let k = 0; k < traces.length; k++) {
+        const attr = traces[k].geometry.attributes.position;
+        for (let i = 0; i < attr.count; i++) {
+          const x = -SIZE / 2 + SIZE * i / (attr.count - 1);
+          const parts = opts.components(x, t);
+          const y = (parts[k] || 0) + 0.16 + k * 0.015;
+          attr.setXYZ(i, x, y, 0);
+        }
+        attr.needsUpdate = true;
+      }
+    }
+    if (particleCount) {
+      const pAttr = particles.geometry.attributes.position;
+      for (let i = 0; i < particleCount; i++) {
+        const x = particleBase[i * 3];
+        const baseY = particleBase[i * 3 + 1];
+        const z = particleBase[i * 3 + 2];
+        const pressure = height(x, z, t);
+        const drift = reduceMotion ? 0 : 0.035 * Math.sin(t * 2.4 + i * 1.37);
+        pAttr.setXYZ(i, x + drift + pressure * 0.04, baseY + pressure * 0.18, z);
+      }
+      pAttr.needsUpdate = true;
+    }
     pos.needsUpdate = true; col.needsUpdate = true;
     geo.computeVertexNormals();
   }
@@ -330,7 +388,15 @@ function makeSurface(canvas, height, opts) {
   const slAmp2 = document.getElementById("sl-amp2");
   const stPhase = document.getElementById("st-phase");
   const stLoud = document.getElementById("st-loud");
-  const S = makeSurface(canvas, height, { h: 400 });
+  const S = makeSurface(canvas, height, {
+    h: 400,
+    components: (x, time) => {
+      const k = 2.0;
+      const A = 0.45 * Math.sin(k * x - time * 3.0);
+      const B = 0.45 * ampB() * Math.sin(k * x - time * 3.0 + phi());
+      return [A, B, A + B];
+    }
+  });
   const F = 220;
   let node = null, gain = null, playing = false, t = 0, last = null;
 
@@ -371,7 +437,18 @@ function makeSurface(canvas, height, opts) {
   const ckAnc = document.getElementById("ck-anc");
   const slMatch = document.getElementById("sl-match");
   const stAnc = document.getElementById("st-anc");
-  const S = makeSurface(canvas, height, { h: 400 });
+  const S = makeSurface(canvas, height, {
+    h: 400,
+    traceColors: [0xe0883f, 0x57b8e0, 0x46c08a],
+    traceOpacity: [0.64, 0.64, 0.96],
+    components: (x, time) => {
+      const noise = 0.45 * noiseWave(x, time, 0);
+      if (!ckAnc.checked) return [noise, 0, noise];
+      const acc = match(); const dphi = (1 - acc) * 0.9;
+      const anti = -0.45 * acc * noiseWave(x, time, -dphi);
+      return [noise, anti, noise + anti];
+    }
+  });
   const F = 110;
   const harm = [[1, 1.0], [2, 0.45], [3, 0.25]];
   let node = null, gain = null, playing = false, t = 0, last = null;
