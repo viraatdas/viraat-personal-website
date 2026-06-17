@@ -147,6 +147,30 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const TAU = Math.PI * 2;
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function runFigureLoop(canvas, draw) {
+  let live = true;
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(entries => { live = entries[0].isIntersecting; }, { rootMargin: "260px 0px" });
+    io.observe(canvas);
+  }
+  function loop(ts) {
+    if (live) draw(ts || 0);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+function primeIdleOrbit(controls, canvas, speed) {
+  if (!reduceMotion) {
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = speed == null ? 0.22 : speed;
+  }
+  const stop = () => { controls.autoRotate = false; };
+  canvas.addEventListener("pointerdown", stop, { once: true });
+  canvas.addEventListener("wheel", stop, { once: true, passive: true });
+}
 
 // ---------------- audio engine ----------------
 const AE = (function () {
@@ -184,6 +208,7 @@ function makeSurface(canvas, height, opts) {
   controls.enablePan = false; controls.enableZoom = false;
   controls.minPolarAngle = 0.15; controls.maxPolarAngle = 1.45;
   controls.rotateSpeed = 0.85;
+  primeIdleOrbit(controls, canvas, 0.18);
 
   scene.add(new THREE.HemisphereLight(0x9fb4d6, 0x182030, 1.0));
   const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(4, 9, 5); scene.add(dl);
@@ -197,6 +222,19 @@ function makeSurface(canvas, height, opts) {
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.1, roughness: 0.55, side: THREE.DoubleSide, flatShading: false });
   const mesh = new THREE.Mesh(geo, mat);
   scene.add(mesh);
+
+  const marker = new THREE.Mesh(
+    new THREE.SphereGeometry(0.13, 18, 18),
+    new THREE.MeshBasicMaterial({ color: opts.markerColor || 0xffffff })
+  );
+  marker.position.set(0, 0, 0);
+  scene.add(marker);
+  const markerRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.22, 0.012, 8, 36),
+    new THREE.MeshBasicMaterial({ color: opts.markerColor || 0xffffff, transparent: true, opacity: 0.45 })
+  );
+  markerRing.rotation.x = Math.PI / 2;
+  scene.add(markerRing);
 
   // subtle base grid plane
   const grid = new THREE.GridHelper(SIZE, SEG / 6, 0x223043, 0x172230);
@@ -220,6 +258,12 @@ function makeSurface(canvas, height, opts) {
       const c = u >= 0 ? cMid.clone().lerp(cHigh, u) : cMid.clone().lerp(cLow, -u);
       col.setXYZ(i, c.r, c.g, c.b);
     }
+    const center = height(0, 0, t);
+    const lift = center + 0.18;
+    marker.position.set(0, lift, 0);
+    markerRing.position.set(0, 0.02, 0);
+    const pulse = reduceMotion ? 1 : 1 + Math.min(0.55, Math.abs(center) * 0.32) + 0.06 * Math.sin(t * 5);
+    marker.scale.setScalar(pulse);
     pos.needsUpdate = true; col.needsUpdate = true;
     geo.computeVertexNormals();
   }
@@ -269,12 +313,11 @@ function makeSurface(canvas, height, opts) {
   slFreq.addEventListener("input", () => { stFreq.textContent = freq() + " Hz"; if (osc) osc.frequency.value = freq(); });
   slAmp.addEventListener("input", () => { if (gain) gain.gain.value = amp() * 0.5; });
 
-  function loop(ts) {
+  runFigureLoop(canvas, ts => {
     if (last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
-    t += dt; S.controls.update(); S.update(t); S.render(); requestAnimationFrame(loop);
-  }
+    t += dt; S.controls.update(); S.update(t); S.render();
+  });
   stFreq.textContent = freq() + " Hz";
-  requestAnimationFrame(loop);
 })();
 
 // =========================================================
@@ -309,16 +352,14 @@ function makeSurface(canvas, height, opts) {
 
   function loudness() { let s = 0; const N = 160; for (let i = 0; i < N; i++) { const tt = i / N / F; const v = Math.sin(TAU * F * tt) + ampB() * Math.sin(TAU * F * tt + phi()); s += v * v; } return Math.sqrt(s / N) / Math.SQRT2; }
 
-  function loop(ts) {
+  runFigureLoop(canvas, ts => {
     if (last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts; t += dt;
     S.controls.update(); S.update(t); S.render();
     const L = loudness();
     stLoud.textContent = L < 0.06 ? "silent" : L > 0.85 ? "loud" : "quieter";
     stLoud.className = "status " + (L < 0.06 ? "good" : L > 0.85 ? "loud" : "");
-    requestAnimationFrame(loop);
-  }
+  });
   stPhase.textContent = "0°";
-  requestAnimationFrame(loop);
 })();
 
 // =========================================================
@@ -361,9 +402,8 @@ function makeSurface(canvas, height, opts) {
     else { stAnc.textContent = "leaking through"; stAnc.className = "status loud"; }
   }
 
-  function loop(ts) { if (last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts; t += dt; S.controls.update(); S.update(t); S.render(); requestAnimationFrame(loop); }
+  runFigureLoop(canvas, ts => { if (last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts; t += dt; S.controls.update(); S.update(t); S.render(); });
   upd();
-  requestAnimationFrame(loop);
 })();
 </script>
 </body>

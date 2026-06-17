@@ -139,6 +139,30 @@ const Sound = (function () {
 
 const TAU = Math.PI * 2;
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function runFigureLoop(canvas, draw) {
+  let live = true;
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(entries => { live = entries[0].isIntersecting; }, { rootMargin: "260px 0px" });
+    io.observe(canvas);
+  }
+  function loop(ts) {
+    if (live) draw(ts || 0);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+function primeIdleOrbit(controls, canvas, speed) {
+  if (!reduceMotion) {
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = speed == null ? 0.18 : speed;
+  }
+  const stop = () => { controls.autoRotate = false; };
+  canvas.addEventListener("pointerdown", stop, { once: true });
+  canvas.addEventListener("wheel", stop, { once: true, passive: true });
+}
 
 // =========================================================
 // HERO: ray-marched gravitationally lensed black hole
@@ -265,8 +289,12 @@ function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   controls.enablePan = false; controls.enableZoom = false;
   controls.minPolarAngle = 0.25; controls.maxPolarAngle = Math.PI - 0.25;
   controls.rotateSpeed = 0.85;
+  primeIdleOrbit(controls, canvas, 0.12);
 
-  slDisk.addEventListener("input", () => { uniforms.diskBright.value = parseFloat(slDisk.value); });
+  slDisk.addEventListener("input", () => {
+    uniforms.diskBright.value = parseFloat(slDisk.value);
+    stLens.textContent = uniforms.diskBright.value < 0.25 ? "shadow and starfield only" : "light bending around the shadow";
+  });
 
   function resize() {
     const w = canvas.clientWidth || canvas.parentElement.clientWidth;
@@ -279,7 +307,7 @@ function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
   const m = new THREE.Matrix4();
   let t0 = null;
-  function loop(ts) {
+  runFigureLoop(canvas, ts => {
     if (t0 == null) t0 = ts;
     uniforms.uTime.value = (ts - t0) / 1000;
     controls.update();
@@ -290,9 +318,7 @@ function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
     uniforms.camUp.value.set(m.elements[4], m.elements[5], m.elements[6]).normalize();
     uniforms.camFwd.value.set(-m.elements[8], -m.elements[9], -m.elements[10]).normalize();
     renderer.render(scene, quadCam);
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
+  });
 })();
 
 // =========================================================
@@ -320,6 +346,9 @@ function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   controls.enableDamping = true; controls.dampingFactor = 0.08;
   controls.enablePan = false; controls.enableZoom = false;
   controls.rotateSpeed = 0.85;
+  primeIdleOrbit(controls, canvas, 0.16);
+  Sound.enabled = ckSound.checked;
+  ckSound.addEventListener("change", () => { Sound.enabled = ckSound.checked; if (Sound.enabled) Sound.ensure(); });
 
   scene.add(new THREE.HemisphereLight(0x8899bb, 0x111122, 1.0));
   const dl = new THREE.DirectionalLight(0xffffff, 1.2); dl.position.set(5, 8, 6); scene.add(dl);
@@ -375,6 +404,7 @@ function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
   let tube = null, dot = null, dotT = 0, pathLen = 0, lastResult = "";
   const dotMesh = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  dotMesh.add(new THREE.PointLight(0xffffff, 1.2, 7));
   scene.add(dotMesh);
   let curve = null;
 
@@ -387,18 +417,18 @@ function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
     const near = Math.abs(Math.abs(b) - B_CRIT);
     const col = res.captured ? 0xe0772f : (near < 0.18 ? 0xd9b94a : 0x57b8e0);
     tube = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.min(400, res.pts.length), 0.05, 8, false),
-      new THREE.MeshBasicMaterial({ color: col }));
+      new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: near < 0.18 ? 0.95 : 0.82 }));
     scene.add(tube);
     dotMesh.material.color.setHex(col);
     dotT = 0;
-    let result = res.captured ? "captured" : (near < 0.18 ? "orbiting" : "escaped");
+    let result = near < 0.18 ? "orbiting" : (res.captured ? "captured" : "escaped");
     if (result !== lastResult) {
       if (result === "captured") Sound.capture();
       else if (result === "escaped" && lastResult) Sound.escape();
     }
     lastResult = result;
-    if (res.captured) { stRay.textContent = "captured, falls in"; stRay.className = "status cap"; }
-    else if (near < 0.18) { stRay.textContent = "grazing the photon sphere"; stRay.className = "status orbit"; }
+    if (near < 0.18) { stRay.textContent = "grazing the photon sphere"; stRay.className = "status orbit"; }
+    else if (res.captured) { stRay.textContent = "captured, falls in"; stRay.className = "status cap"; }
     else { stRay.textContent = "deflected, escapes"; stRay.className = "status esc"; }
   }
   slAim.addEventListener("input", () => { Sound.ensure(); rebuild(); });
@@ -412,16 +442,20 @@ function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   resize(); window.addEventListener("resize", resize);
   rebuild();
 
-  function loop() {
+  runFigureLoop(canvas, ts => {
     controls.update();
     if (curve) {
-      dotT += 0.004; if (dotT > 1) dotT = 0;
+      const speed = lastResult === "orbiting" ? 0.0022 : 0.004;
+      dotT += speed; if (dotT > 1) dotT = 0;
       curve.getPointAt(clamp(dotT, 0, 1), dotMesh.position);
+      const pulse = reduceMotion ? 1 : 1 + 0.18 * Math.sin(ts * 0.012);
+      dotMesh.scale.setScalar(lastResult === "orbiting" ? pulse : 1);
     }
+    const halo = reduceMotion ? 0.5 : 0.42 + 0.18 * Math.sin(ts * 0.004);
+    ps.material.opacity = lastResult === "orbiting" ? halo * 0.55 : 0.10;
+    psRing.material.opacity = lastResult === "orbiting" ? 0.72 + halo * 0.24 : 0.5;
     renderer.render(scene, cam);
-    requestAnimationFrame(loop);
-  }
-  loop();
+  });
 })();
 </script>
 </body>

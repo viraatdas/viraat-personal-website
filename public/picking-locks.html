@@ -221,6 +221,30 @@ const CH_BOTTOM = -0.62;                       // key pin rest bottom (keyway fl
 const CH_TOP = 2.05;                           // spring anchor
 const DRIVER_LEN = 0.82;
 const PIN_R = 0.23;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function runFigureLoop(canvas, draw) {
+  let live = true;
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(entries => { live = entries[0].isIntersecting; }, { rootMargin: "260px 0px" });
+    io.observe(canvas);
+  }
+  function loop(ts) {
+    if (live) draw(ts || 0);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+function primeIdleOrbit(controls, canvas, speed) {
+  if (!reduceMotion) {
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = speed == null ? 0.28 : speed;
+  }
+  const stop = () => { controls.autoRotate = false; };
+  canvas.addEventListener("pointerdown", stop, { once: true });
+  canvas.addEventListener("wheel", stop, { once: true, passive: true });
+}
 
 // materials
 function mats() {
@@ -385,6 +409,7 @@ function makeFigure(canvas, opts) {
   controls.enablePan = false; controls.enableZoom = false;
   controls.minPolarAngle = 0.35; controls.maxPolarAngle = 1.62;
   controls.rotateSpeed = 0.9;
+  primeIdleOrbit(controls, canvas, 0.22);
 
   // lights
   scene.add(new THREE.HemisphereLight(0xffffff, 0x3a4250, 0.6));
@@ -443,12 +468,10 @@ function setCutaway(lock, on) {
   }
   ckCut.addEventListener("change", () => setCutaway(lock, ckCut.checked));
 
-  function loop() {
+  runFigureLoop(canvas, () => {
     update(); fig.controls.update();
     fig.renderer.render(fig.scene, fig.camera);
-    requestAnimationFrame(loop);
-  }
-  loop();
+  });
 })();
 
 // =========================================================
@@ -484,12 +507,10 @@ function setCutaway(lock, on) {
       stShear.className = "status " + (turn > 0.1 ? "bind" : "");
     }
   }
-  function loop() {
+  runFigureLoop(canvas, () => {
     update(); fig.controls.update();
     fig.renderer.render(fig.scene, fig.camera);
-    requestAnimationFrame(loop);
-  }
-  loop();
+  });
 })();
 
 // =========================================================
@@ -505,6 +526,29 @@ function setCutaway(lock, on) {
   const lock = buildLock(fig.scene);
   setCutaway(lock, true);
   lock.key.visible = false;   // no key in picking; you use a pick
+
+  const toolMat = new THREE.MeshStandardMaterial({ color: 0x2e3742, metalness: 0.85, roughness: 0.24 });
+  const pickTool = new THREE.Group();
+  const pickShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.95, 12), toolMat);
+  pickShaft.rotation.z = Math.PI / 2;
+  pickShaft.position.x = -0.52;
+  pickTool.add(pickShaft);
+  const pickHook = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.055, 0.055), toolMat);
+  pickHook.position.set(0.48, 0.12, 0);
+  pickHook.rotation.z = -0.55;
+  pickTool.add(pickHook);
+  pickTool.position.set(XS[0], CH_BOTTOM - 0.24, 0.82);
+  pickTool.visible = false;
+  fig.scene.add(pickTool);
+
+  const wrench = new THREE.Group();
+  const wrenchBlade = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.08, 0.11), toolMat);
+  wrenchBlade.position.set(-0.18, CH_BOTTOM - 0.37, 0.68);
+  const wrenchHandle = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.72, 0.11), toolMat);
+  wrenchHandle.position.set(-0.92, CH_BOTTOM - 0.68, 0.68);
+  wrench.add(wrenchBlade, wrenchHandle);
+  wrench.visible = false;
+  lock.plugGroup.add(wrench);
 
   // fat invisible grab proxies so each pin column is easy to grab and drag
   const proxies = [];
@@ -599,7 +643,7 @@ function setCutaway(lock, on) {
   ckSound.addEventListener("change", () => { Sound.enabled = ckSound.checked; Sound.ensure(); });
   btReset.addEventListener("click", () => { ckTension.checked = false; fig.controls.enabled = true; init(); });
 
-  function update() {
+  function update(ts) {
     const b = binding();
     const sc = setCount();
     if (sc === N && !opened) { opened = true; Sound.open(); }
@@ -617,24 +661,34 @@ function setCutaway(lock, on) {
       const isBind = (i === b);
       const km = lock.keyPins[i].body.material;
       const dm = lock.driverPins[i].mesh.material;
-      if (isBind) { km.emissive.setHex(0xe0772f); km.emissiveIntensity = 0.6; }
+      if (isBind) { km.emissive.setHex(0xe0772f); km.emissiveIntensity = 0.45 + 0.28 * Math.sin(ts * 0.008); }
       else { km.emissiveIntensity = 0; }
       if (setFlags[i]) { dm.emissive.setHex(0x2f9e63); dm.emissiveIntensity = 0.4; }
       else { dm.emissiveIntensity = 0; }
     }
     layoutPins(lock, lifts, setFlags);
 
+    const guidePin = active >= 0 ? active : b;
+    pickTool.visible = ckTension.checked && guidePin >= 0 && !opened;
+    wrench.visible = ckTension.checked || opened;
+    if (pickTool.visible) {
+      const wobble = reduceMotion ? 0 : Math.sin(ts * 0.006) * 0.025;
+      const targetX = XS[guidePin] - 0.08;
+      const targetY = CH_BOTTOM - 0.18 + lifts[guidePin] * 0.78;
+      pickTool.position.x += (targetX - pickTool.position.x) * 0.24;
+      pickTool.position.y += (targetY - pickTool.position.y) * 0.24;
+      pickTool.rotation.z = -0.08 + wobble;
+    }
+
     if (opened) { stSpp.textContent = "open ✓ · all five set"; stSpp.className = "status open"; }
     else if (!ckTension.checked) { stSpp.textContent = "turn on tension to begin"; stSpp.className = "status"; }
     else if (b >= 0) { stSpp.textContent = "pin " + (b + 1) + " binding · " + sc + "/5 set"; stSpp.className = "status bind"; }
   }
 
-  function loop() {
-    update(); fig.controls.update();
+  runFigureLoop(canvas, ts => {
+    update(ts); fig.controls.update();
     fig.renderer.render(fig.scene, fig.camera);
-    requestAnimationFrame(loop);
-  }
-  loop();
+  });
 })();
 </script>
 </body>
