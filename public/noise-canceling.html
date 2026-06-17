@@ -668,6 +668,25 @@ function makeAncDevice(scene) {
   highBadge.position.set(3.35, 0.08, 2.8);
   highBadge.rotation.x = Math.PI / 2;
   S.scene.add(highBadge);
+  const laneTraces = [];
+  function addLaneTrace(z, color, opacity) {
+    const g = new THREE.BufferGeometry();
+    const arr = new Float32Array(120 * 3);
+    g.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+    const line = new THREE.Line(
+      g,
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity })
+    );
+    line.frustumCulled = false;
+    S.scene.add(line);
+    laneTraces.push(line);
+    line.userData.z = z;
+    return line;
+  }
+  const lowNoise = addLaneTrace(-2.2, 0xe0883f, 0.4);
+  const lowAnti = addLaneTrace(-2.2, 0x57b8e0, 0.44);
+  const highNoise = addLaneTrace(2.2, 0xe0883f, 0.45);
+  const highAnti = addLaneTrace(2.2, 0x57b8e0, 0.5);
 
   let t = 0, last = null;
   function delayMs() { return parseFloat(slDelay.value); }
@@ -684,6 +703,22 @@ function makeAncDevice(scene) {
   function smoothstep(a, b, x) {
     const u = clamp((x - a) / (b - a), 0, 1);
     return u * u * (3 - 2 * u);
+  }
+  function componentY(x, high, anti, time) {
+    const freq = high ? 5.7 : 1.35;
+    const speed = high ? 4.2 : 2.0;
+    const d = delayMs() / 1000;
+    if (anti) return -0.38 * Math.sin(freq * x - (time - d * 55) * speed);
+    return 0.38 * Math.sin(freq * x - time * speed);
+  }
+  function updateTrace(line, high, anti, time) {
+    const attr = line.geometry.attributes.position;
+    for (let i = 0; i < attr.count; i++) {
+      const x = -3.8 + 7.6 * i / (attr.count - 1);
+      const y = componentY(x, high, anti, time) + 0.18 + (anti ? 0.035 : -0.035);
+      attr.setXYZ(i, x, y, line.userData.z);
+    }
+    attr.needsUpdate = true;
   }
   function height(x, z, time) {
     return residual(x, z, time) + 0.025 * Math.sin(x * 2.0 + z * 1.5 - time * 2.0);
@@ -703,6 +738,11 @@ function makeAncDevice(scene) {
     lowBadge.scale.setScalar(1 + pulse * 0.08);
     highBadge.scale.setScalar(1 + pulse * 0.18);
     highBadge.material.opacity = 0.34 + delayMs() / 8 * 0.42;
+    updateTrace(lowNoise, false, false, t);
+    updateTrace(lowAnti, false, true, t);
+    updateTrace(highNoise, true, false, t);
+    updateTrace(highAnti, true, true, t);
+    highAnti.material.opacity = 0.32 + delayMs() / 8 * 0.34;
     S.controls.update(); S.update(t); S.render();
   });
 })();

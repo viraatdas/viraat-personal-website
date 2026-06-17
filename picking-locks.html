@@ -907,6 +907,18 @@ function setCutaway(lock, on) {
   rake.position.set(0, CH_BOTTOM - 0.18, 0.84);
   fig.scene.add(rake);
 
+  const sparkCount = 34;
+  const sparkPos = new Float32Array(sparkCount * 3);
+  const sparkVel = new Float32Array(sparkCount * 3);
+  const sparkLife = new Float32Array(sparkCount);
+  const sparkGeo = new THREE.BufferGeometry();
+  sparkGeo.setAttribute("position", new THREE.BufferAttribute(sparkPos, 3));
+  const sparks = new THREE.Points(
+    sparkGeo,
+    new THREE.PointsMaterial({ color: 0xffc46f, size: 0.055, transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending, depthWrite: false })
+  );
+  fig.scene.add(sparks);
+
   const wrenchMat = new THREE.MeshStandardMaterial({ color: 0x1c2530, metalness: 0.82, roughness: 0.25 });
   const wrench = new THREE.Group();
   const blade = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.075, 0.11), wrenchMat);
@@ -935,6 +947,21 @@ function setCutaway(lock, on) {
     for (const i of order) if (!setFlags[i]) return i;
     return -1;
   }
+  function emitSpark(x, y, z, strength) {
+    if (reduceMotion || strength < 0.42) return;
+    let slot = 0, weakest = Infinity;
+    for (let i = 0; i < sparkCount; i++) {
+      if (sparkLife[i] <= 0) { slot = i; break; }
+      if (sparkLife[i] < weakest) { weakest = sparkLife[i]; slot = i; }
+    }
+    sparkPos[slot * 3] = x;
+    sparkPos[slot * 3 + 1] = y;
+    sparkPos[slot * 3 + 2] = z;
+    sparkVel[slot * 3] = (Math.random() - 0.5) * 0.018;
+    sparkVel[slot * 3 + 1] = 0.012 + Math.random() * 0.022;
+    sparkVel[slot * 3 + 2] = 0.006 + Math.random() * 0.018;
+    sparkLife[slot] = 0.7 * strength;
+  }
 
   function animateRake(ts) {
     if (last == null) last = ts;
@@ -956,6 +983,7 @@ function setCutaway(lock, on) {
     for (let i = 0; i < N; i++) {
       const hit = Math.max(0, 1 - Math.abs(XS[i] - rake.position.x) / 0.58);
       const slap = hit * Math.max(0, Math.sin(t * 18 + i * 1.7));
+      if (slap > 0.72 && Math.random() < 0.18) emitSpark(XS[i], CH_BOTTOM - 0.22, 0.86, slap);
       let target = setFlags[i] ? lock.keyPins[i].bit : slap * (lock.keyPins[i].bit + 0.34);
       const luckyTiming = elapsed > 1.25 + sc * 0.95;
       if (!setFlags[i] && i === bind && ((hit > 0.68 && target > lock.keyPins[i].bit * 0.78) || luckyTiming)) {
@@ -978,6 +1006,18 @@ function setCutaway(lock, on) {
 
       lock.springs[i].mesh.rotation.z = reduceMotion ? 0 : slap * 0.16 + pulse[i] * 0.12;
     }
+    let sparkOpacity = 0;
+    for (let i = 0; i < sparkCount; i++) {
+      if (sparkLife[i] <= 0) continue;
+      sparkLife[i] = Math.max(0, sparkLife[i] - dt * 2.3);
+      sparkVel[i * 3 + 1] -= dt * 0.03;
+      sparkPos[i * 3] += sparkVel[i * 3];
+      sparkPos[i * 3 + 1] += sparkVel[i * 3 + 1];
+      sparkPos[i * 3 + 2] += sparkVel[i * 3 + 2];
+      sparkOpacity = Math.max(sparkOpacity, sparkLife[i]);
+    }
+    sparks.material.opacity = Math.min(0.75, sparkOpacity * 1.2);
+    sparkGeo.attributes.position.needsUpdate = true;
     layoutPins(lock, lifts, setFlags);
 
     const targetAngle = opened ? 0.92 : 0.04 + sc * 0.035;
