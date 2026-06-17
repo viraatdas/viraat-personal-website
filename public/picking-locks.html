@@ -919,6 +919,38 @@ function setCutaway(lock, on) {
   );
   fig.scene.add(sparks);
 
+  const scratchLines = [];
+  const scratchHeat = [];
+  function seeded(n) { return Math.sin(n * 91.73) * 43758.5453 % 1; }
+  for (let i = 0; i < 26; i++) {
+    const r0 = Math.abs(seeded(i + 0.4));
+    const r1 = Math.abs(seeded(i + 3.7));
+    const r2 = Math.abs(seeded(i + 9.2));
+    const x = -1.95 + r0 * 3.9;
+    const y = CH_BOTTOM - 0.07 + (r1 - 0.5) * 0.15;
+    const z = 0.61 + r2 * 0.15;
+    const len = 0.08 + Math.abs(seeded(i + 12.8)) * 0.22;
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x - len, y, z),
+        new THREE.Vector3(x + len, y + (r2 - 0.5) * 0.025, z + (r1 - 0.5) * 0.035)
+      ]),
+      new THREE.LineBasicMaterial({
+        color: 0xffd19a,
+        transparent: true,
+        opacity: 0.055,
+        blending: THREE.AdditiveBlending,
+        depthTest: false,
+        depthWrite: false
+      })
+    );
+    line.renderOrder = 8;
+    line.userData.x = x;
+    lock.plugGroup.add(line);
+    scratchLines.push(line);
+    scratchHeat.push(0);
+  }
+
   const wrenchMat = new THREE.MeshStandardMaterial({ color: 0x1c2530, metalness: 0.82, roughness: 0.25 });
   const wrench = new THREE.Group();
   const blade = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.075, 0.11), wrenchMat);
@@ -936,6 +968,7 @@ function setCutaway(lock, on) {
 
   function reset() {
     for (let i = 0; i < N; i++) { setFlags[i] = false; lifts[i] = 0; pulse[i] = 0; }
+    for (let i = 0; i < scratchHeat.length; i++) { scratchHeat[i] = 0; scratchLines[i].material.opacity = 0.055; }
     t = 0; last = null; startMs = performance.now(); angle = 0; opened = false;
     stRake.textContent = "scrubbing pins";
     stRake.className = "status bind";
@@ -984,6 +1017,11 @@ function setCutaway(lock, on) {
       const hit = Math.max(0, 1 - Math.abs(XS[i] - rake.position.x) / 0.58);
       const slap = hit * Math.max(0, Math.sin(t * 18 + i * 1.7));
       if (slap > 0.72 && Math.random() < 0.18) emitSpark(XS[i], CH_BOTTOM - 0.22, 0.86, slap);
+      if (slap > 0.46) {
+        for (let j = 0; j < scratchLines.length; j++) {
+          if (Math.abs(scratchLines[j].userData.x - XS[i]) < 0.55) scratchHeat[j] = Math.max(scratchHeat[j], slap);
+        }
+      }
       let target = setFlags[i] ? lock.keyPins[i].bit : slap * (lock.keyPins[i].bit + 0.34);
       const luckyTiming = elapsed > 1.25 + sc * 0.95;
       if (!setFlags[i] && i === bind && ((hit > 0.68 && target > lock.keyPins[i].bit * 0.78) || luckyTiming)) {
@@ -1018,6 +1056,14 @@ function setCutaway(lock, on) {
     }
     sparks.material.opacity = Math.min(0.75, sparkOpacity * 1.2);
     sparkGeo.attributes.position.needsUpdate = true;
+    let scrapeGlow = 0;
+    for (let i = 0; i < scratchLines.length; i++) {
+      scratchHeat[i] = Math.max(0, scratchHeat[i] - dt * 0.95);
+      scrapeGlow = Math.max(scrapeGlow, scratchHeat[i]);
+      scratchLines[i].material.opacity = 0.055 + scratchHeat[i] * 0.46;
+    }
+    toolMat.emissive.setHex(0xffa85d);
+    toolMat.emissiveIntensity = 0.04 + scrapeGlow * 0.24;
     layoutPins(lock, lifts, setFlags);
 
     const targetAngle = opened ? 0.92 : 0.04 + sc * 0.035;
@@ -1025,8 +1071,8 @@ function setCutaway(lock, on) {
     lock.plugGroup.rotation.x = angle;
     wrench.rotation.x = -0.08 - sc * 0.018 + (reduceMotion ? 0 : Math.sin(t * 18) * 0.01);
 
-    if (opened) { stRake.textContent = "open - lucky sets stacked"; stRake.className = "status open"; }
-    else { stRake.textContent = "raking - " + sc + "/5 lucky sets"; stRake.className = "status bind"; }
+    if (opened) { stRake.textContent = "open - five lucky sets caught"; stRake.className = "status open"; }
+    else { stRake.textContent = "raking - " + sc + "/5 pins caught"; stRake.className = "status bind"; }
 
     fig.controls.update();
     fig.renderer.render(fig.scene, fig.camera);

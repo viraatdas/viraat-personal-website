@@ -148,6 +148,10 @@ const Sound = (function () {
 
 const TAU = Math.PI * 2;
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function smoothstep(a, b, x) {
+  const u = clamp((x - a) / (b - a), 0, 1);
+  return u * u * (3 - 2 * u);
+}
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function runFigureLoop(canvas, draw) {
@@ -248,11 +252,14 @@ function primeIdleOrbit(controls, canvas, speed) {
       float spiral = ang*18.0 - uTime*2.8 - r*4.5;
       float bands = 0.58 + 0.28*sin(spiral) + 0.14*sin(ang*43.0 + r*8.0 - uTime*5.6);
       float grain = noise2(vec2(ang*8.0 + uTime*0.25, r*5.0 - uTime*0.45));
+      float clump = smoothstep(0.78, 1.0, noise2(vec2(ang*24.0 - uTime*0.7, r*8.5 + uTime*0.35)));
       float beam = 0.62 + 1.25*pow(max(0.0, sin(ang - 0.9)), 2.0);
       float innerGlow = 0.65*exp(-abs(r-RIN)*2.7);
+      float redEdge = smoothstep(RIN + 0.95, RIN, r);
+      c = mix(c, vec3(1.0,0.34,0.11), redEdge*0.32);
       float inner = smoothstep(0.0, 0.15, t);
       float outer = 1.0 - smoothstep(0.78, 1.0, t);
-      return c * (bands + grain*0.24 + innerGlow) * beam * inner * outer;
+      return c * (bands + grain*0.24 + clump*0.48 + innerGlow) * beam * inner * outer;
     }
 
     void main(){
@@ -506,6 +513,9 @@ function primeIdleOrbit(controls, canvas, speed) {
     trailDots.push(m);
   }
   let curve = null;
+  const basePhotonColor = new THREE.Color(0xffffff);
+  const redPhotonColor = new THREE.Color(0xff6b2a);
+  const livePhotonColor = new THREE.Color(0xffffff);
 
   function rebuild() {
     const b = parseFloat(slAim.value);
@@ -522,6 +532,7 @@ function primeIdleOrbit(controls, canvas, speed) {
       new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: near < 0.18 ? 0.95 : 0.82 }));
     scene.add(glowTube);
     scene.add(tube);
+    basePhotonColor.setHex(col);
     dotMesh.material.color.setHex(col);
     trailDots.forEach((m, idx) => { m.material.color.setHex(col); m.material.opacity = 0.3 * (1 - idx / trailDots.length); });
     dotT = 0;
@@ -549,15 +560,28 @@ function primeIdleOrbit(controls, canvas, speed) {
   runFigureLoop(canvas, ts => {
     controls.update();
     if (curve) {
-      const speed = lastResult === "orbiting" ? 0.0022 : 0.004;
-      dotT += speed; if (dotT > 1) dotT = 0;
       curve.getPointAt(clamp(dotT, 0, 1), dotMesh.position);
+      const radiusBefore = Math.max(0.001, dotMesh.position.length());
+      const redshiftBefore = clamp((3.9 - radiusBefore) / 2.9, 0, 1);
+      const baseSpeed = lastResult === "orbiting" ? 0.0022 : 0.004;
+      const slow = lastResult === "captured" ? 1 - redshiftBefore * 0.78 : 1 - redshiftBefore * 0.26;
+      dotT += baseSpeed * slow; if (dotT > 1) dotT = 0;
+      curve.getPointAt(clamp(dotT, 0, 1), dotMesh.position);
+      const radius = Math.max(0.001, dotMesh.position.length());
+      const redshift = clamp((3.9 - radius) / 2.9, 0, 1);
+      livePhotonColor.copy(basePhotonColor).lerp(redPhotonColor, redshift);
+      dotMesh.material.color.copy(livePhotonColor);
+      dotMesh.children[0].color.copy(livePhotonColor);
+      dotMesh.children[0].intensity = 1.05 + redshift * 0.9;
       const pulse = reduceMotion ? 1 : 1 + 0.18 * Math.sin(ts * 0.012);
-      dotMesh.scale.setScalar(lastResult === "orbiting" ? pulse : 1);
+      dotMesh.scale.setScalar((lastResult === "orbiting" ? pulse : 1) * (1 + redshift * 0.35));
       for (let i = 0; i < trailDots.length; i++) {
         const tt = (dotT - (i + 1) * 0.018 + 1) % 1;
         curve.getPointAt(clamp(tt, 0, 1), trailDots[i].position);
         trailDots[i].visible = !reduceMotion;
+        const trailRed = Math.max(0, redshift - i * 0.035);
+        trailDots[i].material.color.copy(basePhotonColor).lerp(redPhotonColor, trailRed);
+        trailDots[i].material.opacity = 0.3 * (1 - i / trailDots.length) * (1 + trailRed * 0.9);
       }
     }
     const halo = reduceMotion ? 0.5 : 0.42 + 0.18 * Math.sin(ts * 0.004);
@@ -671,6 +695,17 @@ function primeIdleOrbit(controls, canvas, speed) {
     scene.add(bead);
     fallBeads.push(bead);
   }
+  const clockTicks = [];
+  for (let i = 0; i < 7; i++) {
+    const tick = new THREE.Mesh(
+      new THREE.TorusGeometry(0.09, 0.006, 8, 36),
+      new THREE.MeshBasicMaterial({ color: 0xffc27a, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    tick.rotation.x = Math.PI / 2;
+    tick.userData.u = i / 6;
+    scene.add(tick);
+    clockTicks.push(tick);
+  }
 
   function resize() {
     const w = canvas.clientWidth || canvas.parentElement.clientWidth;
@@ -697,6 +732,17 @@ function primeIdleOrbit(controls, canvas, speed) {
       bead.position.copy(worldlinePts[idx]);
       bead.material.opacity = (0.18 + v * 0.55) * (1 - i / fallBeads.length);
       bead.scale.setScalar(1 + v * 0.8);
+    }
+    for (let i = 0; i < clockTicks.length; i++) {
+      const tick = clockTicks[i];
+      const u = tick.userData.u;
+      const idx = Math.min(worldlinePts.length - 1, Math.max(0, Math.floor(u * (worldlinePts.length - 1))));
+      tick.position.copy(worldlinePts[idx]);
+      const nearHorizon = smoothstep(0.62, 0.95, u);
+      const focus = Math.max(0, 1 - Math.abs(v - u) * 4.2);
+      tick.material.opacity = 0.12 + focus * 0.55 + nearHorizon * v * 0.22;
+      tick.scale.setScalar(1 + focus * 0.45 - nearHorizon * v * 0.18);
+      tick.rotation.z += reduceMotion ? 0 : 0.02 * (1 - nearHorizon * v * 0.78);
     }
 
     const outEnd = new THREE.Vector3(1.2 - v * 2.35, 1.15, 0);
