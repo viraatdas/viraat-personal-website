@@ -126,6 +126,15 @@
 
     <p>Low sounds, like an engine, have long slow waves, so there is plenty of time to measure them and fire back in step. They cancel beautifully. High sounds, like a voice, have tiny fast waves. By the time the chip has measured one and computed its opposite, the wave has already moved on, and the anti-noise lands in the wrong place. That is why your headphones mute the plane but not the baby two rows back.</p>
 
+    <figure>
+      <div class="fig-canvas-wrap"><canvas id="cv-timing"></canvas><div class="hint">drag to rotate</div></div>
+      <div class="controls">
+        <div class="ctrl"><label for="sl-delay">delay</label><input type="range" id="sl-delay" min="0" max="8" step="0.1" value="2.6"><span class="status" id="st-delay">2.6 ms</span></div>
+        <span class="status" id="st-leak">hum cancels, voice leaks</span>
+      </div>
+      <figcaption>The left half is a low engine hum; the right half is a faster voice-like wave. The same processing delay leaves the long wave almost flat but makes the short wave leak through.</figcaption>
+    </figure>
+
     <p>Real headphones usually run two microphones, a <strong>feedforward</strong> mic outside that hears noise before it arrives and a <strong>feedback</strong> mic inside that listens to whatever is left and corrects the system's own mistakes. Good ones blend both. But none of it is magic. It is the same humble fact you heard a few figures ago, that two equal and opposite waves add up to nothing, executed very fast and very precisely a few millimeters from your ear.</p>
 
     <hr class="end">
@@ -635,6 +644,67 @@ function makeAncDevice(scene) {
     S.controls.update(); S.update(t); device.update(t, height(0, 0, t), ckAnc.checked, match()); S.render();
   });
   upd();
+})();
+
+// =========================================================
+// FIGURE 4: delay leakage
+// =========================================================
+(function () {
+  const canvas = document.getElementById("cv-timing");
+  const slDelay = document.getElementById("sl-delay");
+  const stDelay = document.getElementById("st-delay");
+  const stLeak = document.getElementById("st-leak");
+  const S = makeSurface(canvas, height, { h: 390, markerColor: 0x46c08a });
+  const divider = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-4, 0.04, 0), new THREE.Vector3(4, 0.04, 0)]),
+    new THREE.LineBasicMaterial({ color: 0xf4f7fb, transparent: true, opacity: 0.32 })
+  );
+  S.scene.add(divider);
+  const lowBadge = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.015, 8, 48), new THREE.MeshBasicMaterial({ color: 0x46c08a, transparent: true, opacity: 0.46 }));
+  lowBadge.position.set(-3.35, 0.08, -2.8);
+  lowBadge.rotation.x = Math.PI / 2;
+  S.scene.add(lowBadge);
+  const highBadge = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.015, 8, 48), new THREE.MeshBasicMaterial({ color: 0xe0883f, transparent: true, opacity: 0.54 }));
+  highBadge.position.set(3.35, 0.08, 2.8);
+  highBadge.rotation.x = Math.PI / 2;
+  S.scene.add(highBadge);
+
+  let t = 0, last = null;
+  function delayMs() { return parseFloat(slDelay.value); }
+  function residual(x, z, time) {
+    const high = z > 0;
+    const freq = high ? 5.7 : 1.35;
+    const speed = high ? 4.2 : 2.0;
+    const d = delayMs() / 1000;
+    const base = Math.sin(freq * x - time * speed);
+    const anti = -Math.sin(freq * x - (time - d * 55) * speed);
+    const laneFade = high ? smoothstep(0.0, 0.8, z) : smoothstep(0.0, 0.8, -z);
+    return 0.52 * laneFade * (base + anti);
+  }
+  function smoothstep(a, b, x) {
+    const u = clamp((x - a) / (b - a), 0, 1);
+    return u * u * (3 - 2 * u);
+  }
+  function height(x, z, time) {
+    return residual(x, z, time) + 0.025 * Math.sin(x * 2.0 + z * 1.5 - time * 2.0);
+  }
+  function updateStatus() {
+    const d = delayMs();
+    stDelay.textContent = d.toFixed(1) + " ms";
+    stLeak.textContent = d < 1 ? "both mostly cancel" : d < 4 ? "hum cancels, voice leaks" : "timing error gets loud";
+    stLeak.className = "status " + (d < 1 ? "good" : d < 4 ? "" : "loud");
+  }
+  slDelay.addEventListener("input", updateStatus);
+  updateStatus();
+
+  runFigureLoop(canvas, ts => {
+    if (last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts; t += dt;
+    const pulse = reduceMotion ? 0 : 0.5 + 0.5 * Math.sin(t * 3);
+    lowBadge.scale.setScalar(1 + pulse * 0.08);
+    highBadge.scale.setScalar(1 + pulse * 0.18);
+    highBadge.material.opacity = 0.34 + delayMs() / 8 * 0.42;
+    S.controls.update(); S.update(t); S.render();
+  });
 })();
 </script>
 </body>

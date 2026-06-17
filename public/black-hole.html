@@ -104,6 +104,15 @@
 
     <p>Every event has a set of directions light can go from it, its <strong>light cone</strong>, and nothing can travel outside its own cone. Far from the black hole the cone points evenly toward the future, and you are free to move outward or inward. As you get closer, gravity tips the cone over, toward the hole. At the horizon it has tipped so far that even an outgoing ray of light, the fastest possible escape, only manages to hover in place. One step further in and the entire cone points inward. Every possible future, for light and for you, leads to the center. There is no direction left that points out.</p>
 
+    <figure>
+      <div class="fig-canvas-wrap"><canvas id="cv-cone"></canvas><div class="hint">drag to orbit</div></div>
+      <div class="controls">
+        <div class="ctrl"><label for="sl-fall">distance</label><input type="range" id="sl-fall" min="0" max="1" step="0.001" value="0.42"></div>
+        <span class="status esc" id="st-cone">outward light can still escape</span>
+      </div>
+      <figcaption>The blue cone is the set of future directions light can take. Slide inward and the cone tips toward the hole; at the horizon the outward edge stalls, and inside the horizon every direction points deeper in.</figcaption>
+    </figure>
+
     <h2>What you would actually see</h2>
 
     <p>Go back to the first figure and fly around. Because the hole bends every ray that passes near it, the disk of glowing gas does not sit flat like Saturn's rings. You see its far side lifted up over the top of the hole and its underside curled beneath, because the light from those regions is bent around to reach your eye. The dark circle in the middle is not the horizon itself but its <em>shadow</em>, swollen by all that bending to look markedly larger than the horizon really is.</p>
@@ -568,6 +577,124 @@ function primeIdleOrbit(controls, canvas, speed) {
     }
     disk1.rotation.z += reduceMotion ? 0 : 0.0013;
     disk2.rotation.z -= reduceMotion ? 0 : 0.0008;
+    renderer.render(scene, cam);
+  });
+})();
+
+// =========================================================
+// LIGHT CONE TILT
+// =========================================================
+(function () {
+  const canvas = document.getElementById("cv-cone");
+  const slFall = document.getElementById("sl-fall");
+  const stCone = document.getElementById("st-cone");
+  const H = 410;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  renderer.setClearColor(0x06080d, 1);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  const scene = new THREE.Scene();
+  scene.add(new THREE.HemisphereLight(0xa2b7d4, 0x0c1018, 1.0));
+  const cam = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+  cam.position.set(6, 4.4, 9);
+  const controls = new OrbitControls(cam, canvas);
+  controls.target.set(0.8, 0.45, 0);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.enablePan = false; controls.enableZoom = false;
+  controls.rotateSpeed = 0.85;
+  primeIdleOrbit(controls, canvas, 0.13);
+
+  const horizon = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 64, 32),
+    new THREE.MeshBasicMaterial({ color: 0x000000 })
+  );
+  scene.add(horizon);
+  const horizonRing = new THREE.Mesh(
+    new THREE.TorusGeometry(1.02, 0.012, 8, 128),
+    new THREE.MeshBasicMaterial({ color: 0xe0772f, transparent: true, opacity: 0.62, blending: THREE.AdditiveBlending, depthWrite: false })
+  );
+  horizonRing.rotation.x = Math.PI / 2;
+  scene.add(horizonRing);
+
+  const grid = new THREE.GridHelper(9, 24, 0x26344a, 0x141d2a);
+  grid.position.y = -0.72;
+  scene.add(grid);
+
+  const coneGroup = new THREE.Group();
+  scene.add(coneGroup);
+  const coneMat = new THREE.MeshBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.72, 1.55, 64, 1, true), coneMat);
+  cone.position.y = 0.78;
+  coneGroup.add(cone);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.012, 8, 80), new THREE.MeshBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.68, blending: THREE.AdditiveBlending, depthWrite: false }));
+  rim.position.y = 0.01;
+  rim.rotation.x = Math.PI / 2;
+  coneGroup.add(rim);
+  const eventDot = new THREE.Mesh(new THREE.SphereGeometry(0.08, 18, 18), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  coneGroup.add(eventDot);
+
+  const outward = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(1.2, 1.15, 0)]),
+    new THREE.LineBasicMaterial({ color: 0x57b8e0, transparent: true, opacity: 0.9 })
+  );
+  coneGroup.add(outward);
+  const inward = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(-1.2, 1.15, 0)]),
+    new THREE.LineBasicMaterial({ color: 0xe0772f, transparent: true, opacity: 0.78 })
+  );
+  coneGroup.add(inward);
+  const photons = [outward, inward].map((line, i) => {
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), new THREE.MeshBasicMaterial({ color: i ? 0xe0772f : 0x57b8e0, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending }));
+    coneGroup.add(dot);
+    return { dot, line, offset: i * 0.44 };
+  });
+
+  function resize() {
+    const w = canvas.clientWidth || canvas.parentElement.clientWidth;
+    canvas.style.height = H + "px";
+    renderer.setSize(w, H, false);
+    cam.aspect = w / H; cam.updateProjectionMatrix();
+  }
+  resize(); window.addEventListener("resize", resize);
+
+  function updateGeometry(ts) {
+    const v = parseFloat(slFall.value);
+    const r = 4.4 - v * 3.72;
+    const tilt = v * 1.42;
+    coneGroup.position.set(r, -0.05 + v * 0.22, 0);
+    coneGroup.rotation.z = tilt;
+    coneMat.opacity = 0.16 + v * 0.12;
+    rim.material.opacity = 0.48 + v * 0.28;
+    horizonRing.material.opacity = 0.42 + 0.18 * Math.sin(ts * 0.003);
+
+    const outEnd = new THREE.Vector3(1.2 - v * 2.35, 1.15, 0);
+    const inEnd = new THREE.Vector3(-1.2 - v * 1.15, 1.15, 0);
+    outward.geometry.setFromPoints([new THREE.Vector3(), outEnd]);
+    inward.geometry.setFromPoints([new THREE.Vector3(), inEnd]);
+    outward.material.opacity = v > 0.82 ? 0.25 : 0.9;
+
+    for (const item of photons) {
+      const u = reduceMotion ? item.offset : (ts * 0.00045 + item.offset) % 1;
+      const pts = item.line.geometry.attributes.position;
+      item.dot.position.set(
+        pts.getX(0) + (pts.getX(1) - pts.getX(0)) * u,
+        pts.getY(0) + (pts.getY(1) - pts.getY(0)) * u,
+        pts.getZ(0) + (pts.getZ(1) - pts.getZ(0)) * u
+      );
+    }
+
+    if (v < 0.58) { stCone.textContent = "outward light can still escape"; stCone.className = "status esc"; }
+    else if (v < 0.82) { stCone.textContent = "outward light stalls at the horizon"; stCone.className = "status orbit"; }
+    else { stCone.textContent = "every future points inward"; stCone.className = "status cap"; }
+  }
+  slFall.addEventListener("input", () => updateGeometry(performance.now()));
+
+  runFigureLoop(canvas, ts => {
+    updateGeometry(ts);
+    controls.update();
     renderer.render(scene, cam);
   });
 })();
