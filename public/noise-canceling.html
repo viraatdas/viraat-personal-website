@@ -475,6 +475,15 @@ function makeAncDevice(scene) {
     group.add(ring);
     residualRings.push({ ring, offset: i / 3 });
   }
+  const phaseFlecks = [];
+  for (let i = 0; i < 12; i++) {
+    const mat = (i % 2 ? cyanMat : amberMat).clone();
+    mat.opacity = 0;
+    const fleck = new THREE.Mesh(new THREE.SphereGeometry(0.028 + (i % 3) * 0.006, 8, 8), mat);
+    fleck.visible = false;
+    group.add(fleck);
+    phaseFlecks.push({ fleck, offset: i / 12, side: i % 2 ? 1 : -1 });
+  }
 
   return {
     update(t, residual, on, accuracy) {
@@ -504,6 +513,23 @@ function makeAncDevice(scene) {
         item.ring.scale.setScalar(0.88 + leakage * 0.26 + u * 0.48);
         item.ring.rotation.z += reduceMotion ? 0 : 0.003 + leakage * 0.006;
         item.ring.material.opacity = item.ring.visible ? (1 - u) * (0.1 + leakage * 0.38) : 0;
+      }
+      for (const item of phaseFlecks) {
+        const live = on && leakage > 0.1 && !reduceMotion;
+        item.fleck.visible = live;
+        if (!live) {
+          item.fleck.material.opacity = 0;
+          continue;
+        }
+        const a = t * (2.6 + leakage * 1.4) + item.offset * Math.PI * 2;
+        const r = 0.18 + item.offset * 0.24;
+        item.fleck.position.set(
+          drum.position.x + Math.cos(a) * r,
+          drum.position.y + Math.sin(a * 1.37) * r * 0.62,
+          drum.position.z + item.side * (0.045 + leakage * 0.055)
+        );
+        item.fleck.scale.setScalar(0.75 + leakage * 1.15);
+        item.fleck.material.opacity = leakage * (0.18 + 0.24 * Math.sin(a * 1.9) ** 2);
       }
 
       fan.rotation.z += reduceMotion ? 0 : 0.18 + motion * 0.04;

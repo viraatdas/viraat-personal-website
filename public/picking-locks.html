@@ -755,6 +755,33 @@ function setCutaway(lock, on) {
     springHalos.push(halos);
   }
 
+  const shearDust = [];
+  const dustGeo = new THREE.SphereGeometry(0.018, 8, 8);
+  for (let i = 0; i < 18; i++) {
+    const mote = new THREE.Mesh(
+      dustGeo,
+      new THREE.MeshBasicMaterial({
+        color: i % 3 ? 0xffb45a : 0xded7c5,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    mote.userData = {
+      side: i % 2 ? 1 : -1,
+      spread: 0.08 + Math.random() * 0.28,
+      lift: Math.random() * 0.12,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.004 + Math.random() * 0.006,
+      size: 0.55 + Math.random() * 0.9
+    };
+    mote.renderOrder = 9;
+    mote.visible = false;
+    lock.group.add(mote);
+    shearDust.push(mote);
+  }
+
   // fat invisible grab proxies so each pin column is easy to grab and drag
   const proxies = [];
   for (let i = 0; i < N; i++) {
@@ -925,6 +952,26 @@ function setCutaway(lock, on) {
         halo.scale.setScalar(0.82 + springLoad * 0.34 + breathe);
         halo.material.opacity = halo.visible ? springLoad * (0.16 + u * 0.1) : 0;
       });
+    }
+
+    const dustLive = b >= 0 && ckTension.checked && !opened && !reduceMotion;
+    const dustForce = dustLive ? clamp((active === b ? manual[b] : lifts[b] + lock.keyPins[b].bit * 0.24) / Math.max(0.001, lock.keyPins[b].bit + 0.08), 0.18, 1) : 0;
+    for (let i = 0; i < shearDust.length; i++) {
+      const mote = shearDust[i];
+      mote.visible = dustLive && dustForce > 0.12;
+      if (!mote.visible) {
+        mote.material.opacity = 0;
+        continue;
+      }
+      const u = (ts * mote.userData.speed + mote.userData.phase) % (Math.PI * 2);
+      const drift = Math.sin(u) * mote.userData.spread;
+      mote.position.set(
+        XS[b] + drift,
+        SHEAR + 0.01 + mote.userData.lift * (0.35 + 0.65 * Math.sin(u * 0.7) ** 2),
+        0.26 + mote.userData.side * (0.08 + 0.04 * Math.cos(u))
+      );
+      mote.scale.setScalar(mote.userData.size * (0.72 + dustForce * 0.58));
+      mote.material.opacity = dustForce * (0.08 + 0.22 * Math.sin(u) ** 2);
     }
 
     const guidePin = active >= 0 ? active : b;

@@ -415,6 +415,28 @@ function primeIdleOrbit(controls, canvas, speed) {
   disk1.rotation.x = Math.PI / 2; scene.add(disk1);
   const disk2 = new THREE.Mesh(new THREE.TorusGeometry(2.85 * SC, 0.035, 10, 160), diskMat.clone());
   disk2.material.opacity = 0.12; disk2.rotation.x = Math.PI / 2; scene.add(disk2);
+  const gasHot = new THREE.Color(0xffd07a);
+  const gasCool = new THREE.Color(0xe0772f);
+  const gasColor = new THREE.Color();
+  const gasBeads = [];
+  let gasSeed = 11;
+  function gasRand() { gasSeed = (gasSeed * 1664525 + 1013904223) >>> 0; return gasSeed / 0xffffffff; }
+  for (let i = 0; i < 58; i++) {
+    const bead = new THREE.Mesh(
+      new THREE.SphereGeometry(0.018 + gasRand() * 0.035, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xe0772f, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    bead.userData = {
+      r: (1.85 + gasRand() * 1.35) * SC,
+      a: gasRand() * TAU,
+      speed: 0.00038 + gasRand() * 0.00068,
+      lift: (gasRand() - 0.5) * 0.075,
+      base: 0.16 + gasRand() * 0.3,
+      size: 0.75 + gasRand() * 1.1
+    };
+    scene.add(bead);
+    gasBeads.push(bead);
+  }
   const echoRings = [];
   for (const [radius, opacity, tilt] of [[1.48, 0.16, 0.0], [1.62, 0.12, 0.18], [1.82, 0.08, -0.16]]) {
     const ring = new THREE.Mesh(
@@ -629,6 +651,16 @@ function primeIdleOrbit(controls, canvas, speed) {
     ps.material.opacity = lastResult === "orbiting" ? halo * 0.55 : 0.10;
     psRing.material.opacity = lastResult === "orbiting" ? 0.72 + halo * 0.24 : 0.5;
     horizonGlow.material.opacity = lastResult === "captured" ? 0.22 + halo * 0.12 : 0.12 + halo * 0.06;
+    for (const bead of gasBeads) {
+      const a = bead.userData.a + ts * bead.userData.speed;
+      const r = bead.userData.r * (1 + 0.035 * Math.sin(ts * 0.0016 + bead.userData.a * 3));
+      const doppler = 0.5 + 0.5 * Math.cos(a - 0.65);
+      bead.position.set(Math.cos(a) * r, bead.userData.lift + 0.035 * Math.sin(a * 2.4), Math.sin(a) * r);
+      gasColor.copy(gasCool).lerp(gasHot, doppler);
+      bead.material.color.copy(gasColor);
+      bead.material.opacity = bead.userData.base * (0.34 + doppler * 0.9) * (lastResult === "captured" ? 1.18 : 1);
+      bead.scale.setScalar(bead.userData.size * (0.85 + doppler * 0.46));
+    }
     for (let i = 0; i < echoRings.length; i++) {
       const ring = echoRings[i];
       const breathing = reduceMotion ? 0 : 0.5 + 0.5 * Math.sin(ts * 0.0035 + i * 1.7);
