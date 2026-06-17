@@ -231,6 +231,7 @@ const CH_TOP = 2.05;                           // spring anchor
 const DRIVER_LEN = 0.82;
 const PIN_R = 0.23;
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
 function runFigureLoop(canvas, draw) {
   let live = true;
@@ -651,10 +652,11 @@ function setCutaway(lock, on) {
   torqueNeedle.visible = false;
   lock.plugGroup.add(torqueNeedle);
 
-  const ledges = [], clickRings = [], bindRings = [];
+  const ledges = [], clickRings = [], bindRings = [], contactPads = [];
   const ledgeGeo = new THREE.BoxGeometry(0.5, 0.035, 0.78);
   const clickGeo = new THREE.TorusGeometry(0.34, 0.015, 8, 48);
   const bindGeo = new THREE.TorusGeometry(0.29, 0.012, 8, 48);
+  const contactGeo = new THREE.BoxGeometry(0.48, 0.018, 0.72);
   for (let i = 0; i < N; i++) {
     const ledge = new THREE.Mesh(
       ledgeGeo,
@@ -704,6 +706,22 @@ function setCutaway(lock, on) {
     bindRing.visible = false;
     lock.group.add(bindRing);
     bindRings.push(bindRing);
+
+    const pad = new THREE.Mesh(
+      contactGeo,
+      new THREE.MeshBasicMaterial({
+        color: 0xff8a3a,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    pad.position.set(XS[i], SHEAR - 0.028, 0.08);
+    pad.renderOrder = 7;
+    pad.visible = false;
+    lock.group.add(pad);
+    contactPads.push(pad);
   }
 
   // fat invisible grab proxies so each pin column is easy to grab and drag
@@ -845,6 +863,13 @@ function setCutaway(lock, on) {
       bindRing.material.opacity = isCurrentBind ? 0.32 + 0.2 * Math.sin(ts * 0.008) : 0;
       bindRing.scale.setScalar(isCurrentBind ? 1.0 + 0.06 * Math.sin(ts * 0.01) : 1);
 
+      const pad = contactPads[i];
+      const load = isCurrentBind ? clamp((active === i ? manual[i] : lock.keyPins[i].bit * 0.42) / Math.max(0.001, lock.keyPins[i].bit), 0.18, 1.1) : 0;
+      const flashLoad = Math.max(load, flash * 0.9);
+      pad.visible = flashLoad > 0.02;
+      pad.material.opacity = 0.05 + flashLoad * 0.38;
+      pad.scale.set(0.7 + flashLoad * 0.42, 1, 0.72 + flashLoad * 0.25);
+
       const spring = lock.springs[i].mesh;
       const springKick = flash > 0 ? Math.sin((1 - flash) * Math.PI * 5) * flash * 0.16 : 0;
       spring.rotation.z = reduceMotion ? 0 : springKick + (active === i ? Math.sin(ts * 0.024 + i) * 0.055 : 0);
@@ -866,7 +891,9 @@ function setCutaway(lock, on) {
       const targetY = CH_BOTTOM - 0.18 + lifts[guidePin] * 0.78;
       pickTool.position.x += (targetX - pickTool.position.x) * 0.24;
       pickTool.position.y += (targetY - pickTool.position.y) * 0.24;
-      pickTool.rotation.z = -0.08 + wobble;
+      const flex = active === guidePin ? clamp(manual[guidePin] / Math.max(0.001, lock.keyPins[guidePin].bit + 0.18), 0, 1) : 0.25;
+      pickTool.rotation.z = -0.08 + wobble - flex * 0.075;
+      pickTool.scale.y = 1 + flex * 0.028;
     }
 
     if (opened) { stSpp.textContent = "open ✓ · all five set"; stSpp.className = "status open"; }

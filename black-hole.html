@@ -304,6 +304,10 @@ function primeIdleOrbit(controls, canvas, speed) {
       float photonRing = exp(-pow((minR - 1.55) * 5.6, 2.0));
       float ringFlicker = 0.72 + 0.18*sin(uTime*2.4 + atan(uv.y, uv.x)*6.0);
       color += vec3(1.0,0.66,0.27) * photonRing * ringFlicker * diskBright * 0.26;
+      float innerRed = exp(-pow((minR - 1.48) * 8.0, 2.0));
+      float outerBlue = exp(-pow((minR - 1.66) * 7.0, 2.0));
+      color += vec3(0.32,0.06,0.0) * innerRed * diskBright * 0.16;
+      color += vec3(0.02,0.11,0.26) * outerBlue * 0.22;
       color += vec3(0.22,0.42,0.95) * photonRing * 0.035;
       color += vec3(0.025,0.02,0.04) * smoothstep(0.35, 1.4, length(uv));
       color = color / (color + vec3(0.82));   // tone map
@@ -579,7 +583,8 @@ function primeIdleOrbit(controls, canvas, speed) {
         const tt = (dotT - (i + 1) * 0.018 + 1) % 1;
         curve.getPointAt(clamp(tt, 0, 1), trailDots[i].position);
         trailDots[i].visible = !reduceMotion;
-        const trailRed = Math.max(0, redshift - i * 0.035);
+        const trailRadius = Math.max(0.001, trailDots[i].position.length());
+        const trailRed = clamp((3.9 - trailRadius) / 2.9, 0, 1) * Math.max(0.2, 1 - i * 0.035);
         trailDots[i].material.color.copy(basePhotonColor).lerp(redPhotonColor, trailRed);
         trailDots[i].material.opacity = 0.3 * (1 - i / trailDots.length) * (1 + trailRed * 0.9);
       }
