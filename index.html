@@ -157,13 +157,143 @@
       color: rgba(0, 0, 0, 0.4);
     }
 
+    /* --- previews --- */
+
+    .hint {
+      font-size: 11px;
+      font-weight: 400;
+      color: rgba(0, 0, 0, 0.55);
+      margin-left: 0.75rem;
+      letter-spacing: 0.02em;
+    }
+
+    .project a[data-preview] {
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    /* inline thumbnails, injected on touch devices */
+    .project .thumb {
+      display: block;
+      width: 100%;
+      margin-top: 0.85rem;
+      aspect-ratio: 8 / 5;
+      object-fit: cover;
+      object-position: top center;
+      background: #f2f2f2;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+    }
+
+    /* floating preview card, desktop */
+    #peek {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 40;
+      width: 320px;
+      pointer-events: none;
+      transform: translate3d(-999px, -999px, 0);
+      transition: transform 0.11s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+
+    #peek .peek-inner {
+      background: white;
+      border: 1px solid black;
+      box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.07);
+      opacity: 0;
+      transform: translateY(5px) scale(0.985);
+      transition: opacity 0.12s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #peek.on .peek-inner {
+      opacity: 1;
+      transform: none;
+    }
+
+    #peek .peek-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: baseline;
+      font-size: 11px;
+      line-height: 1.4;
+      letter-spacing: 0.02em;
+      color: rgba(0, 0, 0, 0.62);
+      padding: 5px 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    #peek .peek-url {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #peek .peek-shot {
+      position: relative;
+      aspect-ratio: 8 / 5;
+      background: #f2f2f2;
+      overflow: hidden;
+    }
+
+    #peek .peek-shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+
+    #peek .peek-shot img.ready {
+      opacity: 1;
+    }
+
+    /* thin loading rule that retracts once the shot lands */
+    #peek .peek-shot::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 1px;
+      background: rgba(0, 0, 0, 0.35);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.9s ease-out;
+    }
+
+    #peek.loading .peek-shot::after {
+      transform: scaleX(0.7);
+    }
+
     @media (max-width: 640px) {
       body {
         padding: 2rem 1rem;
       }
-      
+
       nav {
         margin-bottom: 3rem;
+      }
+    }
+
+    @media (hover: none), (max-width: 700px) {
+      .hint {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #peek,
+      #peek .peek-inner,
+      #peek .peek-shot img,
+      #peek .peek-shot::after {
+        transition-duration: 0.01ms;
+      }
+
+      #peek .peek-inner {
+        transform: none;
       }
     }
   </style>
@@ -179,7 +309,7 @@
     </div>
     
     <div class="bio">
-      <p>Hi! My name is Viraat. A little about me. I like to build things. Most of my time nowadays is spent building <a href="https://exla.ai" target="_blank">Exla</a>.</p>
+      <p>Hi! My name is Viraat. A little about me. I like to build things. Most of my time nowadays is spent building <a href="https://exla.ai" target="_blank" data-preview="exla">Exla</a>.</p>
       
       <p>I was a MLE at a big tech company at one point in time. Being a founder is more fun.</p>
       
@@ -190,63 +320,73 @@
     <div class="projects">
       <h2>Writing</h2>
       <div class="project">
-        <a href="https://viraat.substack.com" target="_blank">Substack</a>
+        <a href="https://viraat.substack.com" target="_blank" data-preview="substack">Substack</a>
         <p>I like to write - but don't do it as much as I want to.</p>
       </div>
     </div>
 
     <div class="projects">
-      <h2>Projects</h2>
+      <h2>Projects<span class="hint">hover a name to peek</span></h2>
       <div class="project">
-        <a href="https://exla.ai" target="_blank">Exla</a>
+        <a href="https://exla.ai" target="_blank" data-preview="exla">Exla</a>
         <p>My startup and where 99% of my time is spent.</p>
       </div>
 
       <div class="project">
-        <a href="https://sleeve.viraat.dev" target="_blank">Sleeve</a>
+        <a href="https://gpus.exla.ai" target="_blank" data-preview="exla-gpus">Exla GPUs</a>
+        <p>On-demand GPUs from Exla.</p>
+      </div>
+
+      <div class="project">
+        <a href="https://manas.viraat.dev" target="_blank" data-preview="manas">Manas</a>
+        <p>The control panel for your day, on macOS. You write the todo list; Manas reads your whole-day context (Screen Time, browser history, Claude Code and Codex sessions) and judges whether you are on track, adding the things you did but never wrote down.</p>
+      </div>
+
+      <div class="project">
+        <a href="https://sleeve.viraat.dev" target="_blank" data-preview="sleeve">Sleeve</a>
         <p>A highly secure home for insurance, health, and identity documents, with private temporary sharing.</p>
       </div>
 
       <div class="project">
-        <a href="https://mooterminal.viraat.dev" target="_blank">Moobot Terminal</a>
+        <a href="https://mooterminal.viraat.dev" target="_blank" data-preview="mooterminal">Moobot Terminal</a>
         <p>A Mac trading terminal with an AI research desk. Trades through Robinhood; research agents work topics continuously and propose trades, and you hold the trigger.</p>
       </div>
 
       <div class="project">
-        <a href="https://slide.viraat.dev" target="_blank">Slide</a>
+        <a href="https://slide.viraat.dev" target="_blank" data-preview="slide">Slide</a>
         <p>The best video calling app for shitty internet. Does one thing well: video calls. Just your phone number, no passwords, no clutter. iOS &amp; Android.</p>
       </div>
 
       <div class="project">
-        <a href="https://backbot.viraat.dev" target="_blank">backbot</a>
+        <a href="https://backbot.viraat.dev" target="_blank" data-preview="backbot">backbot</a>
         <p>A tiny CLI that backs up your Mac nightly to your own S3 Glacier bucket. End-to-end encrypted with restic, ~$8/year. Bring your own AWS keys.</p>
       </div>
 
       <div class="project">
-        <a href="https://stow.viraat.dev" target="_blank">stow</a>
+        <a href="https://stow.viraat.dev" target="_blank" data-preview="stow">stow</a>
         <p>Offload unused files on your Mac to your own S3 and restore them on demand. Content-addressed, deduped, byte-for-byte verified. One brew install, bring your own AWS keys.</p>
       </div>
 
       <div class="project">
-        <a href="https://www.wagerpals.io/" target="_blank">Wager Pals</a>
+        <a href="https://www.wagerpals.io/" target="_blank" data-preview="wagerpals">Wager Pals</a>
         <p>Polymarket but for your friends. Place bets about your friends lives. It's quite entertaining. </p>
         <p> Submit your issues <a href="https://github.com/viraatdas/wagerpals-v2/issues" target="_blank">here</a> </p>
       </div>
 
       
       <div class="project">
-        <a href="https://deepest-research.viraat.dev" target="_blank">(Alpha) Deepest Research</a>
+        <a href="https://deepest-research.viraat.dev" target="_blank" data-preview="deepest-research">(Alpha) Deepest Research</a>
         <p>What if you ran deep research for multiple days and context engineered it well!</p>
       </div>
 
       
       <div class="project">
-        <a href="https://notes.viraat.dev/" target="_blank">Notes</a>
+        <a href="https://notes.viraat.dev/" target="_blank" data-preview="notes">Notes</a>
           <p> Collection of my notes on things I have been learning about.</p>
       </div>
 
       <div class="project">
-        <a href="https://bitdrop.dev/" target="_blank">Bitdrop</a>
+        <a href="https://bitdrop.dev/" target="_blank" data-preview="bitdrop">Bitdrop</a>
           <p> A file sharing app that lets you view files within 1 km radius of you.</p>
 
           <p> Built with my good friend <a href="https://github.com/KritR" target="_blank">Krithik</a>. 
@@ -254,38 +394,38 @@
       </div>
 
       <div class="project">
-        <a href="https://journal.viraat.dev/" target="_blank">Journal</a>
+        <a href="https://journal.viraat.dev/" target="_blank" data-preview="journal">Journal</a>
           <p> Journal that is highly coupled with AI. Super cool once you have 3 or more entries.</p>
       </div>
 
       <div class="project">
-        <a href="https://aether.viraat.dev/" target="_blank">Aether</a>
+        <a href="https://aether.viraat.dev/" target="_blank" data-preview="aether">Aether</a>
           <p> Detect military aircrafts in the sky in real time.</p>
           <p> this is a twitter bot as well <a href="https://x.com/MilAirTracker" target="_blank">MilAirTracker</a></p>
       </div>
 
       <div class="project">
-        <a href="https://hermes.viraat.dev/" target="_blank">Hermes</a>
+        <a href="https://hermes.viraat.dev/" target="_blank" data-preview="hermes">Hermes</a>
           <p> Open source AI note taking app for MacOS.</p>
       </div>
 
       <div class="project">
-        <a href="https://mwitch.viraat.dev/" target="_blank">mwitch</a>
+        <a href="https://mwitch.viraat.dev/" target="_blank" data-preview="mwitch">mwitch</a>
           <p> A fast, native macOS window switcher. Cmd+Tab through every window across every app, not one icon per app. Apple Silicon, open source.</p>
       </div>
 
       <div class="project">
-        <a href="https://rudder.viraat.dev/" target="_blank">Rudder</a>
+        <a href="https://rudder.viraat.dev/" target="_blank" data-preview="rudder">Rudder</a>
           <p> Native dashboard for running coding agents in parallel. Each task gets its own isolated git worktree with Claude Code or Codex running inside. Massively parallel, reviewable, easy to merge.</p>
       </div>
 
       <div class="project">
-        <a href="https://pdff.viraat.dev/" target="_blank">pdff</a>
+        <a href="https://pdff.viraat.dev/" target="_blank" data-preview="pdff">pdff</a>
           <p> Native Mac PDF viewer that allows you to edit, fill, and add signatures very quickly.</p>
       </div>
 
       <div class="project">
-        <a href="https://lendy.viraat.dev" target="_blank">Lendy</a>
+        <a href="https://lendy.viraat.dev" target="_blank" data-preview="lendy">Lendy</a>
           <p> Your cozy book lending library. Keep track of books you are borrowing.</p>
       </div>
 
@@ -302,17 +442,17 @@
       </div>
 
       <div class="project">
-        <a href="https://boker.viraat.dev" target="_blank">Boker</a>
+        <a href="https://boker.viraat.dev" target="_blank" data-preview="boker">Boker</a>
         <p>Play poker (NLHE) with LLM bots or with your friends.</p>
       </div>
 
       <div class="project">
-        <a href="https://ben10-battle-ready.viraat.dev" target="_blank">Ben 10: Battle Ready</a>
+        <a href="https://ben10-battle-ready.viraat.dev" target="_blank" data-preview="ben10">Ben 10: Battle Ready</a>
         <p>The classic Cartoon Network Shockwave game, reverse-engineered and rebuilt in HTML5. Play as Ben and all 10 aliens!</p>
       </div>
 
       <div class="project">
-        <a href="https://ers.viraat.dev" target="_blank">Egyptian Rat Screw</a>
+        <a href="https://ers.viraat.dev" target="_blank" data-preview="ers">Egyptian Rat Screw</a>
         <p>Real-time online ERS for 2–8 players. Server-authoritative slap timing with a tunable grace window, so the fastest hand wins, not the fastest packet.</p>
       </div>
 
@@ -340,5 +480,134 @@
       <a href="https://www.linkedin.com/in/viraatdas/" target="_blank">linkedin</a>
     </div>
   </div>
+
+  <figure id="peek" aria-hidden="true">
+    <div class="peek-inner">
+      <div class="peek-bar"><span class="peek-url"></span><span>↗</span></div>
+      <div class="peek-shot"><img alt=""></div>
+    </div>
+  </figure>
+
+  <script>
+  (function () {
+    var links = document.querySelectorAll('a[data-preview]');
+    if (!links.length) return;
+
+    var src = function (slug) { return '/assets/previews/' + slug + '.webp'; };
+    var touch = !window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    // No hover to hang a preview off of: show the shots inline instead.
+    if (touch) {
+      Array.prototype.forEach.call(links, function (a) {
+        if (!a.parentNode.classList.contains('project')) return;
+        var img = new Image();
+        img.className = 'thumb';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.alt = a.textContent.trim() + ' screenshot';
+        img.src = src(a.dataset.preview);
+        img.onerror = function () { img.remove(); };
+        a.parentNode.appendChild(img);
+      });
+      return;
+    }
+
+    var peek = document.getElementById('peek');
+    var shot = peek.querySelector('img');
+    var label = peek.querySelector('.peek-url');
+    var CARD_W = 320, CARD_H = 226, PAD = 8, GAP = 22;
+    var column = document.querySelector('.container');
+    var current = null, anchor = null, x = -999, y = -999, raf = 0, gutterX = -1;
+
+    // If the margin beside the text column is wide enough, park the card there
+    // so it reads as a note in the margin instead of covering what you're reading.
+    var measure = function () {
+      var edge = column.getBoundingClientRect().right;
+      var placed = Math.min(edge + 28, window.innerWidth - CARD_W - PAD);
+      gutterX = placed >= edge + 12 ? placed : -1;
+    };
+    measure();
+    window.addEventListener('resize', measure);
+
+    var place = function () {
+      raf = 0;
+      peek.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
+    };
+
+    var move = function (px, py) {
+      if (gutterX > 0) {
+        x = gutterX;
+      } else {
+        var right = px + GAP;
+        x = right + CARD_W + PAD > window.innerWidth ? px - GAP - CARD_W : right;
+        x = Math.max(PAD, x);
+      }
+      y = Math.min(Math.max(PAD, py - CARD_H / 2), window.innerHeight - CARD_H - PAD);
+      if (!raf) raf = requestAnimationFrame(place);
+    };
+
+    var open = function (a) {
+      if (current === a) return;
+      current = a;
+      label.textContent = a.href.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      shot.classList.remove('ready');
+      peek.classList.add('loading');
+      shot.src = src(a.dataset.preview);
+      if (shot.complete && shot.naturalWidth) ready();
+      peek.classList.add('on');
+    };
+
+    var ready = function () {
+      shot.classList.add('ready');
+      peek.classList.remove('loading');
+    };
+
+    var close = function () {
+      current = null;
+      anchor = null;
+      peek.classList.remove('on', 'loading');
+    };
+
+    var toLink = function (a) {
+      var r = a.getBoundingClientRect();
+      move(r.right, r.top + r.height / 2);
+    };
+
+    shot.addEventListener('load', ready);
+    shot.addEventListener('error', close);
+
+    Array.prototype.forEach.call(links, function (a) {
+      a.addEventListener('pointerenter', function (e) {
+        if (e.pointerType && e.pointerType !== 'mouse') return;
+        anchor = null;
+        move(e.clientX, e.clientY);
+        peek.style.transition = 'none';
+        place();
+        requestAnimationFrame(function () { peek.style.transition = ''; });
+        open(a);
+      });
+      a.addEventListener('pointermove', function (e) {
+        if (e.pointerType && e.pointerType !== 'mouse') return;
+        move(e.clientX, e.clientY);
+        open(a); // no-op unless a scroll closed it out from under the cursor
+      });
+      a.addEventListener('pointerleave', close);
+      // keyboard: anchor the card to the link itself
+      a.addEventListener('focus', function () {
+        anchor = a;
+        toLink(a);
+        open(a);
+      });
+      a.addEventListener('blur', close);
+    });
+
+    // Scrolling moves the link out from under the cursor; a focused link brings
+    // its card along instead (focus() itself scrolls).
+    window.addEventListener('scroll', function () {
+      if (anchor) toLink(anchor); else close();
+    }, { passive: true });
+    window.addEventListener('blur', close);
+  })();
+  </script>
 </body>
 </html>
